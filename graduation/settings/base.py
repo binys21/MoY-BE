@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     'rest_auth.registration',
     
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     
     # 추가한 앱 이름
     'accounts',
@@ -70,13 +71,12 @@ REST_FRAMEWORK = {
 }
 REST_USE_JWT = True
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=10),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=3),
     'ROTATE_REFRESH_TOKENS': True,
     'AUTH_HEADER_TYPES': ('Bearer',),
     'TOKEN_USER_CLASS': 'accounts.User',
     'BLACKLIST_AFTER_ROTATION': True, 
-    # 알아서
 }
 
 MIDDLEWARE = [

@@ -11,6 +11,9 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 #from .pagination import PaginationHandlerMixin
 from rest_framework.decorators import api_view
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.exceptions import TokenError, InvalidToken
 
 
 # # Create your views here.
@@ -30,8 +33,8 @@ class SignUpView(views.APIView):
     def post(self,request, format=None):
         serializer = SignUpSerializer(data=request.data)
         if serializer.is_valid():
-            user, access = serializer.save()
-            returndata={"id":user.id,"nickname":user.nickname,"access_token":access}
+            user, access, refresh = serializer.save()
+            returndata={"id":user.id,"nickname":user.nickname,"access_token":access, "refresh_token":refresh}
             return Response({'message':'회원가입 성공','data':returndata}, status=HTTP_201_CREATED)
         return Response({'message':'회원가입 실패','error':serializer.errors},status=HTTP_400_BAD_REQUEST)
     
@@ -113,8 +116,63 @@ class KakaoSignupView(views.APIView):
         request_data['password']=KAKAO_PASSWORD
         serializer = SignUpSerializer(data=request_data)
         if serializer.is_valid():
-            user, access = serializer.save()
-            data={"id":user.id,"nickname":user.nickname,"access_token":access}
+            user, access, refresh = serializer.save()
+            data={"id":user.id,"nickname":user.nickname,"access_token":access,"refresh_token": refresh}
             return Response({'message':'닉네임 등록, 카카오 회원가입 완료','data':data}, status=HTTP_201_CREATED)
         return Response({'message':'카카오','error':serializer.errors},status=HTTP_400_BAD_REQUEST)
+
+class TokenRefreshView(views.APIView):
+    def post(self, request, *args, **kwargs):
+        refresh_token = request.data.get("refresh", None)
+
+        if not refresh_token:
+            return Response(
+                {"message": str(e)},
+                status=HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            # Refresh token을 통해 새로운 access token 생성
+            token = RefreshToken(refresh_token)
+            new_access_token = token.access_token
+
+            # 커스터마이즈된 반환 데이터 구조
+            return Response(
+                {
+                    "message": "access token 업데이트",
+                    "data": {
+                        "access_token": str(new_access_token)
+                    },
+                },
+                status=HTTP_200_OK,
+            )
+
+        except TokenError as e:
+            return Response(
+                {
+                    "message": "유효하지 않거나 만료된 refresh 토큰입니다"
+                },
+                status=HTTP_401_UNAUTHORIZED,
+            )
         
+
+class LogoutView(views.APIView):
+    permission_classes = [IsAuthenticated]  
+    def post(self, request):
+        refresh_token = self.request.data.get('refresh_token')
+
+        if not refresh_token:
+            return Response({"message": "Refresh token이 필요합니다."}, status=HTTP_400_BAD_REQUEST)
+
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+
+            # 블랙리스트 처리 완료 후 응답
+            return Response({"message": "로그아웃 성공"}, status=HTTP_200_OK)
+
+        except InvalidToken:
+            return Response({"message": "유효하지 않거나 만료된 refresh 토큰입니다"}, status=HTTP_401_UNAUTHORIZED)
+
+        except Exception as e:
+            return Response({"message": str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)

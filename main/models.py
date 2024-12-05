@@ -28,6 +28,7 @@ class Black(models.Model):
     name = models.TextField()
     description = models.TextField(blank=True, null=True)
     information = models.TextField()
+    img = models.TextField()
     color = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(24)])
     frame = models.CharField(choices=FRAME_CHOICES, max_length=5)
@@ -56,6 +57,7 @@ class White(models.Model):
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=5)
     name = models.TextField()
     description = models.TextField(blank=True, null=True)
+    img = models.TextField()
     color = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(24)])
     frame = models.CharField(choices=FRAME_CHOICES, max_length=5)

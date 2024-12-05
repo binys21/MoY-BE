@@ -18,7 +18,7 @@ class SignUpSerializer(serializers.ModelSerializer):
         refresh = str(token)
         access = str(token.access_token)
 
-        return user, access
+        return user, access, refresh
 
 class LoginSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=64)
@@ -40,7 +40,8 @@ class LoginSerializer(serializers.Serializer):
                 data = {
                     'id': user.id,
                     'nickname': user.nickname ,
-                    'access_token': access
+                    'access_token': access,
+                    "refresh_token":refresh
                 }
 
                 return data
@@ -68,7 +69,8 @@ class KakaoLoginSerializer(serializers.Serializer):
                 data = {
                     'id': user.id,
                     'nickname': user.nickname ,
-                    'access_token': access
+                    'access_token': access,
+                    'refresh_token':refresh
                 }
 
                 return data
