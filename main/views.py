@@ -130,7 +130,7 @@ class BlackPostDetailView(APIView):
             "data": serializer.data
         }, status=status.HTTP_200_OK)
     
-    
+
 class WhitePostDetailView(APIView):
     permission_classes = [IsAuthenticated]
     def get(self,request,post_id):
@@ -145,3 +145,35 @@ class WhitePostDetailView(APIView):
             "message": "화이트 포스트 상세 정보 조회 성공",
             "data": serializer.data
         }, status=status.HTTP_200_OK)
+    
+    
+class BlackPostDeleteView(APIView):
+    permission_classes=[IsAuthenticated]
+
+    def delete(self,request,post_id):
+        try:
+            post=Black.objects.get(id=post_id)
+        except Black.DoesNotExist:
+            return Response({"message":"요청한 포스트를 찾을 수 없습니다."},
+                            status=status.HTTP_404_NOT_FOUND)
+        if post.user != request.user:
+            return Response({"message": "삭제 권한이 없습니다."}, 
+                            status=status.HTTP_403_FORBIDDEN)
+        post.delete()
+        return Response({"message": "블랙 포스트 삭제 성공!"})
+
+
+class WhitePostDeleteView(APIView):
+    permission_classes=[IsAuthenticated]
+
+    def delete(self,request,post_id):
+        try:
+            post=White.objects.get(id=post_id)
+        except White.DoesNotExist:
+            return Response({"message":"요청한 포스트를 찾을 수 없습니다."},
+                            status=status.HTTP_404_NOT_FOUND)
+        if post.user != request.user:
+            return Response({"message": "삭제 권한이 없습니다."}, 
+                            status=status.HTTP_403_FORBIDDEN)
+        post.delete()
+        return Response({"message": "화이트 포스트 삭제 성공!"})
