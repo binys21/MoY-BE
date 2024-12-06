@@ -17,7 +17,7 @@ class Black(models.Model):
 
     FRAME_CHOICES = [
         ('TREE','TREE'),
-        ('MAN','SNOW'),
+        ('SNOW','SNOW'),
         ('HAT','HAT'),
         ('YEAR','YEAR'),
         ('MAN','MAN'),
@@ -47,7 +47,7 @@ class White(models.Model):
 
     FRAME_CHOICES = [
         ('TREE','TREE'),
-        ('MAN','SNOW'),
+        ('SNOW','SNOW'),
         ('HAT','HAT'),
         ('YEAR','YEAR'),
         ('MAN','MAN'),
