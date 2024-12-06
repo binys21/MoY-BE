@@ -40,3 +40,76 @@ class WhiteListView(APIView):
             "data": paginated_response},status=status.HTTP_200_OK)
     
 
+class BlackPostSearchView(APIView):
+    def get(self,request):
+        try:
+            category=request.query_params.get('category',None)
+            name=request.query_params.get('name',None)
+            nickname=request.query_params.get('nickname',None)
+
+            posts=Black.objects.all()
+            if category:
+                posts=posts.filter(category=category)
+            if name:
+                posts=posts.filter(name__icontains=name)
+
+            if nickname:
+                posts=posts.filter(user__nickname__icontain=nickname)
+            posts=posts.order_by('-id')
+
+            paginator=PostListPagination()
+            paginated_posts = paginator.paginate_queryset(posts, request)
+            serializer = BlackSerializer(paginated_posts, many=True)
+            paginated_response = paginator.get_paginated_response(serializer.data).data
+            
+            if not posts.exists():
+                return Response(
+                        {"message": "검색 결과가 없습니다", "data": []},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+            return Response(
+                {"message": "검색 성공","data": paginated_response},
+                status=status.HTTP_200_OK)
+        except Exception:
+            return Response(
+                {"message":"잘못된 요청입니다. 파라미터를 확인해주세요"},
+                status=status.HTTP_400_BAD_REQUEST
+            )    
+
+class WhitePostSearchView(APIView):
+    def get(self,request):
+        try:
+            category=request.query_params.get('category',None)
+            name=request.query_params.get('name',None)
+            nickname=request.query_params.get('nickname',None)
+
+            posts=White.objects.all()
+            if category:
+                posts=posts.filter(category=category)
+            if name:
+                posts=posts.filter(name__icontains=name)
+
+            if nickname:
+                posts=posts.filter(user__nickname__icontain=nickname)
+            posts=posts.order_by('-id')
+
+            paginator=PostListPagination()
+            paginated_posts = paginator.paginate_queryset(posts, request)
+            serializer = WhiteSerializer(paginated_posts, many=True)
+            paginated_response = paginator.get_paginated_response(serializer.data).data
+            
+            if not posts.exists():
+                return Response(
+                        {"message": "검색 결과가 없습니다", "data": []},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+
+            return Response(
+                {"message": "검색 성공","data": paginated_response},
+                status=status.HTTP_200_OK)
+        except Exception:
+            return Response(
+                {"message":"잘못된 요청입니다. 파라미터를 확인해주세요"},
+                status=status.HTTP_400_BAD_REQUEST
+            )    

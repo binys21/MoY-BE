@@ -14,4 +14,7 @@ class BlackSerializer(serializers.ModelSerializer):
 class WhiteSerializer(serializers.ModelSerializer):
     class Meta:
         model=White
-        fields=['id', 'name', 'img', 'color', 'frame'] 
+        fields=['id', 'name', 'nickname', 'img', 'color', 'frame'] 
+        
+    def get_nickname(self,obj):
+        return obj.user.nickname
