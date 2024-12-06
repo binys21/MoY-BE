@@ -3,6 +3,7 @@ from django.shortcuts import render
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
 from .models import *
 from .serializers import *
@@ -113,3 +114,34 @@ class WhitePostSearchView(APIView):
                 {"message":"잘못된 요청입니다. 파라미터를 확인해주세요"},
                 status=status.HTTP_400_BAD_REQUEST
             )    
+        
+class BlackPostDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,post_id):
+        try:
+            post=Black.objects.get(id=post_id)
+        except Black.DoesNotExist:
+            return Response({"message": "게시물이 존재하지 않습니다."}, 
+                            status=status.HTTP_404_NOT_FOUND)
+        serializer=BlackPostDetailSerializer(post,context={'request':request})
+
+        return Response({
+            "message": "블랙 포스트 상세 정보 조회 성공",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)
+    
+    
+class WhitePostDetailView(APIView):
+    permission_classes = [IsAuthenticated]
+    def get(self,request,post_id):
+        try:
+            post=White.objects.get(id=post_id)
+        except White.DoesNotExist:
+            return Response({"message": "게시물이 존재하지 않습니다."}, 
+                            status=status.HTTP_404_NOT_FOUND)
+        serializer=WhitePostDetailSerializer(post,context={'request':request})
+
+        return Response({
+            "message": "화이트 포스트 상세 정보 조회 성공",
+            "data": serializer.data
+        }, status=status.HTTP_200_OK)

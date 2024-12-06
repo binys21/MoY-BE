@@ -8,6 +8,8 @@ urlpatterns = [
     path('main/white/<str:category>/', WhiteListView.as_view()),
     path('main/black/search', BlackPostSearchView.as_view()),
     path('main/white/search', WhitePostSearchView.as_view()),
+    path('main/black/<int:post_id>/', BlackPostDetailView.as_view()),
+    path('main/white/<int:post_id>/', BlackPostDetailView.as_view()),
 
 ]
 
