@@ -14,6 +14,8 @@ urlpatterns = [
     path('white/<int:post_id>/delete/', WhitePostDeleteView.as_view()),
     path('black/mypage', BlackMypageView.as_view()),
     path('white/mypage', WhiteMypageView.as_view()),
+    path('blackshare/<str:nickname>/', BlackShareView.as_view()),
+    path('whiteshare/<str:nickname>/', WhiteShareView.as_view()),
 
 ]
 

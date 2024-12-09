@@ -4,6 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from .models import *
 from .serializers import *
@@ -41,6 +42,7 @@ class WhiteListView(APIView):
             "data": paginated_response},status=status.HTTP_200_OK)
     
 
+
 class BlackPostSearchView(APIView):
     def get(self,request):
         try:
@@ -77,6 +79,7 @@ class BlackPostSearchView(APIView):
                 {"message":"잘못된 요청입니다. 파라미터를 확인해주세요"},
                 status=status.HTTP_400_BAD_REQUEST
             )    
+
 
 class WhitePostSearchView(APIView):
     def get(self,request):
@@ -197,6 +200,7 @@ class BlackMypageView(APIView):
         return Response(response_data, status=status.HTTP_200_OK)
     
 
+
 class WhiteMypageView(APIView):
     permission_classes=[IsAuthenticated]
 
@@ -213,3 +217,45 @@ class WhiteMypageView(APIView):
             },
         }
         return Response(response_data, status=status.HTTP_200_OK)
+    
+
+class BlackShareView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self, request, nickname):
+        try:          
+            user = User.objects.get(nickname=nickname)
+        except User.DoesNotExist:
+            return Response({"message": "해당 유저가 존재하지 않습니다."}, 
+                            status=status.HTTP_404_NOT_FOUND)
+        
+        posts = Black.objects.filter(user=user)
+        serializer = BlackSerializer(posts, many=True)
+
+        return Response({
+            "message": "블랙 공유페이지 조회 성공",
+            "data": {
+                "nickname": nickname,
+                "posts": serializer.data
+            }
+        }, status=status.HTTP_200_OK)
+
+
+class WhiteShareView(APIView):
+    permission_classes=[IsAuthenticated]
+    def get(self, request, nickname):
+        try:          
+            user = User.objects.get(nickname=nickname)
+        except User.DoesNotExist:
+            return Response({"message": "해당 유저가 존재하지 않습니다."}, 
+                            status=status.HTTP_404_NOT_FOUND)
+        
+        posts = White.objects.filter(user=user)
+        serializer = WhiteSerializer(posts, many=True)
+
+        return Response({
+            "message": "화이트 공유페이지 조회 성공",
+            "data": {
+                "nickname": nickname,
+                "posts": serializer.data
+            }
+        }, status=status.HTTP_200_OK)
