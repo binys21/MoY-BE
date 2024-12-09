@@ -12,6 +12,8 @@ urlpatterns = [
     path('white/<int:post_id>/', WhitePostDetailView.as_view()),
     path('black/<int:post_id>/delete/', BlackPostDeleteView.as_view()),
     path('white/<int:post_id>/delete/', WhitePostDeleteView.as_view()),
+    path('black/mypage', BlackMypageView.as_view()),
+    path('white/mypage', WhiteMypageView.as_view()),
 
 ]
 

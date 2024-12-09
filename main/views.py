@@ -177,3 +177,39 @@ class WhitePostDeleteView(APIView):
                             status=status.HTTP_403_FORBIDDEN)
         post.delete()
         return Response({"message": "화이트 포스트 삭제 성공!"})
+
+
+class BlackMypageView(APIView):
+    permission_classes=[IsAuthenticated]
+
+    def get(self,request):
+        user=request.user
+        blacks=Black.objects.filter(user=user)
+        serializer = BlackSerializer(blacks, many=True)
+
+        response_data={
+            "message": "블랙 마이페이지 조회 성공",
+            "data": {
+                "nickname": user.nickname, 
+                "content_list": serializer.data,
+            },
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
+    
+
+class WhiteMypageView(APIView):
+    permission_classes=[IsAuthenticated]
+
+    def get(self,request):
+        user=request.user
+        whites=White.objects.filter(user=user)
+        serializer = WhiteSerializer(whites, many=True)
+
+        response_data={
+            "message": "화이트 마이페이지 조회 성공",
+            "data": {
+                "nickname": user.nickname, 
+                "content_list": serializer.data,
+            },
+        }
+        return Response(response_data, status=status.HTTP_200_OK)
