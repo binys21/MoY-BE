@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     # 추가한 앱 이름
     'accounts',
     'main',
+    'home'
     
 ]
 SITE_ID = 1
