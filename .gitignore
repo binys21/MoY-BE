@@ -20,5 +20,6 @@ env.bak/
 venv.bak/
 newvenv.bak/
 .env.prod
+myenv/
 
 .DS_Store
