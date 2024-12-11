@@ -12,6 +12,7 @@ class BlackSerializer(serializers.ModelSerializer):
         return obj.user.nickname
 
 class WhiteSerializer(serializers.ModelSerializer):
+    nickname = serializers.SerializerMethodField()
     class Meta:
         model=White
         fields=['id', 'name', 'nickname', 'img', 'color', 'frame'] 
@@ -27,14 +28,14 @@ class BlackPostDetailSerializer(serializers.ModelSerializer):
         model=Black
         fields = ['nickname', 'category', 'name', 'information', 'description', 'is_owner', 'img', 'color', 'frame']
         
-        def get_nickname(self, obj):
-            return obj.user.nickname
-    
-        def get_is_owner(self,obj):
-            request=self.context.get('request')
-            if request and request.user==obj.user:
-                return True
-            return False
+    def get_nickname(self, obj):
+        return obj.user.nickname
+
+    def get_is_owner(self,obj):
+        request=self.context.get('request')
+        if request and request.user==obj.user:
+            return True
+        return False
 
 class WhitePostDetailSerializer(serializers.ModelSerializer):
     nickname=serializers.SerializerMethodField()
@@ -42,13 +43,13 @@ class WhitePostDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model=White
-        fields = ['nickname', 'category', 'name', 'information', 'description', 'is_owner', 'img', 'color', 'frame']
+        fields = ['nickname', 'category', 'name', 'description', 'is_owner', 'img', 'color', 'frame']
         
-        def get_nickname(self, obj):
-            return obj.user.nickname
-    
-        def get_is_owner(self,obj):
-            request=self.context.get('request')
-            if request and request.user==obj.user:
-                return True
-            return False
+    def get_nickname(self, obj):
+        return obj.user.nickname
+
+    def get_is_owner(self,obj):
+        request=self.context.get('request')
+        if request and request.user==obj.user:
+            return True
+        return False
