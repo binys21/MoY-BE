@@ -15,7 +15,8 @@ django-storages==1.13.1
 django-health-check==3.18.1
 django-rest-auth==0.9.5
 django-allauth==0.43.0
-#Pillow
+pillow==11.0.0
+boto3==1.26.23
 # mysqlclient==2.2.4
 PyMySQL==1.1.0
 tzdata
