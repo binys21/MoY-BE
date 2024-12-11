@@ -8,6 +8,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.pagination import PageNumberPagination
 from .models import *
 from .serializers import *
+from django.db.models import Q
 
 class PostListPagination(PageNumberPagination):
     page_size = 10  
@@ -15,55 +16,91 @@ class PostListPagination(PageNumberPagination):
 
 class BlackListView(APIView):
     def get(self, request, category):
-        posts = Black.objects.filter(category=category).order_by('-id')
+        try:
+            posts = Black.objects.filter(category=category).order_by('-id')
+            if not posts.exists():
+                    return Response({
+                        "message": "블랙 분야에 해당하는 데이터가 없습니다.",
+                        "data": []
+                    }, status=status.HTTP_200_OK)
 
-        paginator = PostListPagination()
-        paginated_posts = paginator.paginate_queryset(posts, request)
-        serializer = BlackSerializer(paginated_posts, many=True)
+            paginator = PostListPagination()
+            paginated_posts = paginator.paginate_queryset(posts, request)
+            serializer = BlackSerializer(paginated_posts, many=True)
+            
+            total_pages = (paginator.page.paginator.count + paginator.page_size - 1) // paginator.page_size
+            paginated_response = paginator.get_paginated_response(serializer.data).data
+            paginated_response['total_pages'] = total_pages
 
-        paginated_response = paginator.get_paginated_response(serializer.data).data
-
-        return Response({
-            "message": "블랙 분야별 목록 조회 성공",
-            "data": paginated_response},status=status.HTTP_200_OK
-        )
+            return Response({
+                "message": "블랙 분야별 목록 조회 성공",
+                "data": paginated_response},status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            # 예외 처리
+            print(f"Error: {e}")
+            return Response({
+                "message": "서버 내부 오류가 발생했습니다.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 class WhiteListView(APIView):
     def get(self,request,category):
-        posts=White.objects.filter(category=category).order_by('-id')
-        paginator=PostListPagination()
-        paginated_posts = paginator.paginate_queryset(posts,request)
-        serializer=WhiteSerializer(paginated_posts,many=True)
+        try:
+            # 데이터 필터링 및 정렬
+            posts = White.objects.filter(category=category).order_by('-id')
+            if not posts.exists():
+                return Response({
+                    "message": "화이트 분야에 해당하는 데이터가 없습니다.",
+                    "data": []
+                }, status=status.HTTP_200_OK)
 
-        paginated_response = paginator.get_paginated_response(serializer.data).data
+            paginator = PostListPagination()
+            paginated_posts = paginator.paginate_queryset(posts, request)
+            serializer = WhiteSerializer(paginated_posts, many=True)
 
-        return Response({
-            "message":"화이트 분야별 목록 조회 성공",
-            "data": paginated_response},status=status.HTTP_200_OK)
-    
+            total_pages = (paginator.page.paginator.count + paginator.page_size - 1) // paginator.page_size
+            paginated_response = paginator.get_paginated_response(serializer.data).data
+            paginated_response['total_pages'] = total_pages
+
+            return Response({
+                "message": "화이트 분야별 목록 조회 성공",
+                "data": paginated_response
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response({
+                "message": "서버 내부 오류가 발생했습니다.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class BlackPostSearchView(APIView):
     def get(self,request):
         try:
-            category=request.query_params.get('category',None)
-            name=request.query_params.get('name',None)
-            nickname=request.query_params.get('nickname',None)
+            keyword = request.GET.get('keyword', '')
+            
+            posts = Black.objects.filter(
+                Q(category__icontains=keyword) |  # 분야 검색
+                Q(name__icontains=keyword) |    # 제목 검색
+                Q(user__nickname__icontains=keyword)  # 작성자 닉네임 검색
+            ).order_by('-id')
 
-            posts=Black.objects.all()
-            if category:
-                posts=posts.filter(category=category)
-            if name:
-                posts=posts.filter(name__icontains=name)
+            if not posts.exists():
+                return Response({
+                    "message": "검색 결과가 없습니다",
+                    "data": []
+                }, status=status.HTTP_200_OK)
 
-            if nickname:
-                posts=posts.filter(user__nickname__icontain=nickname)
-            posts=posts.order_by('-id')
 
             paginator=PostListPagination()
             paginated_posts = paginator.paginate_queryset(posts, request)
             serializer = BlackSerializer(paginated_posts, many=True)
+            total_pages = (paginator.page.paginator.count + paginator.page_size - 1) // paginator.page_size
             paginated_response = paginator.get_paginated_response(serializer.data).data
+            paginated_response['total_pages'] = total_pages
             
             if not posts.exists():
                 return Response(
@@ -84,24 +121,27 @@ class BlackPostSearchView(APIView):
 class WhitePostSearchView(APIView):
     def get(self,request):
         try:
-            category=request.query_params.get('category',None)
-            name=request.query_params.get('name',None)
-            nickname=request.query_params.get('nickname',None)
+            keyword = request.GET.get('keyword', '')
+            
+            posts = White.objects.filter(
+                Q(category__icontains=keyword) |  # 분야 검색
+                Q(name__icontains=keyword) |    # 제목 검색
+                Q(user__nickname__icontains=keyword)  # 작성자 닉네임 검색
+            ).order_by('-id')
 
-            posts=White.objects.all()
-            if category:
-                posts=posts.filter(category=category)
-            if name:
-                posts=posts.filter(name__icontains=name)
-
-            if nickname:
-                posts=posts.filter(user__nickname__icontain=nickname)
-            posts=posts.order_by('-id')
+            if not posts.exists():
+                return Response({
+                    "message": "검색 결과가 없습니다",
+                    "data": []
+                }, status=status.HTTP_200_OK)
+            
 
             paginator=PostListPagination()
             paginated_posts = paginator.paginate_queryset(posts, request)
             serializer = WhiteSerializer(paginated_posts, many=True)
+            total_pages = (paginator.page.paginator.count + paginator.page_size - 1) // paginator.page_size
             paginated_response = paginator.get_paginated_response(serializer.data).data
+            paginated_response['total_pages'] = total_pages
             
             if not posts.exists():
                 return Response(
@@ -119,35 +159,48 @@ class WhitePostSearchView(APIView):
             )    
         
 class BlackPostDetailView(APIView):
-    permission_classes = [IsAuthenticated]
     def get(self,request,post_id):
         try:
-            post=Black.objects.get(id=post_id)
-        except Black.DoesNotExist:
-            return Response({"message": "게시물이 존재하지 않습니다."}, 
-                            status=status.HTTP_404_NOT_FOUND)
-        serializer=BlackPostDetailSerializer(post,context={'request':request})
+            try:
+                post=Black.objects.get(id=post_id)
+            except Black.DoesNotExist:
+                return Response({"message": "게시물이 존재하지 않습니다."}, 
+                                status=status.HTTP_404_NOT_FOUND)
+            
+            serializer=BlackPostDetailSerializer(post,context={'request':request})
 
-        return Response({
-            "message": "블랙 포스트 상세 정보 조회 성공",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+            return Response({
+                "message": "블랙 포스트 상세 정보 조회 성공",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response({
+                "message": "서버 내부 오류가 발생했습니다.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
 
 class WhitePostDetailView(APIView):
-    permission_classes = [IsAuthenticated]
     def get(self,request,post_id):
         try:
-            post=White.objects.get(id=post_id)
-        except White.DoesNotExist:
-            return Response({"message": "게시물이 존재하지 않습니다."}, 
-                            status=status.HTTP_404_NOT_FOUND)
-        serializer=WhitePostDetailSerializer(post,context={'request':request})
+            try:
+                post=White.objects.get(id=post_id)
+            except White.DoesNotExist:
+                return Response({"message": "게시물이 존재하지 않습니다."}, 
+                                status=status.HTTP_404_NOT_FOUND)
+            serializer=WhitePostDetailSerializer(post,context={'request':request})
 
-        return Response({
-            "message": "화이트 포스트 상세 정보 조회 성공",
-            "data": serializer.data
-        }, status=status.HTTP_200_OK)
+            return Response({
+                "message": "화이트 포스트 상세 정보 조회 성공",
+                "data": serializer.data
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response({
+                "message": "서버 내부 오류가 발생했습니다.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     
 class BlackPostDeleteView(APIView):
@@ -194,6 +247,7 @@ class BlackMypageView(APIView):
             "message": "블랙 마이페이지 조회 성공",
             "data": {
                 "nickname": user.nickname, 
+                "user_id": user.id,
                 "content_list": serializer.data,
             },
         }
@@ -213,6 +267,7 @@ class WhiteMypageView(APIView):
             "message": "화이트 마이페이지 조회 성공",
             "data": {
                 "nickname": user.nickname, 
+                "user_id": user.id,
                 "content_list": serializer.data,
             },
         }
@@ -221,41 +276,77 @@ class WhiteMypageView(APIView):
 
 class BlackShareView(APIView):
     permission_classes=[IsAuthenticated]
-    def get(self, request, nickname):
-        try:          
-            user = User.objects.get(nickname=nickname)
-        except User.DoesNotExist:
-            return Response({"message": "해당 유저가 존재하지 않습니다."}, 
-                            status=status.HTTP_404_NOT_FOUND)
-        
-        posts = Black.objects.filter(user=user)
-        serializer = BlackSerializer(posts, many=True)
+    def get(self, request, user_id):
+        try:
+            try:          
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({"message": "해당 유저가 존재하지 않습니다."}, 
+                                status=status.HTTP_404_NOT_FOUND)
+            
+            posts = Black.objects.filter(user=user)
+            if not posts.exists():
+                    return Response({
+                        "message": "해당 유저의 게시글이 없습니다",
+                        "data": {
+                            "nickname": user.nickname,
+                            "user_id": user.id,
+                            "posts": []
+                        }
+                    }, status=status.HTTP_200_OK)
 
-        return Response({
-            "message": "블랙 공유페이지 조회 성공",
-            "data": {
-                "nickname": nickname,
-                "posts": serializer.data
-            }
-        }, status=status.HTTP_200_OK)
+            serializer = BlackSerializer(posts, many=True)
+
+            return Response({
+                "message": "블랙 공유페이지 조회 성공",
+                "data": {
+                    "nickname": user.nickname,
+                    "user_id": user.id,
+                    "posts": serializer.data
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response({
+                "message": "서버 내부 오류가 발생했습니다.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 
 class WhiteShareView(APIView):
     permission_classes=[IsAuthenticated]
-    def get(self, request, nickname):
-        try:          
-            user = User.objects.get(nickname=nickname)
-        except User.DoesNotExist:
-            return Response({"message": "해당 유저가 존재하지 않습니다."}, 
-                            status=status.HTTP_404_NOT_FOUND)
-        
-        posts = White.objects.filter(user=user)
-        serializer = WhiteSerializer(posts, many=True)
+    def get(self, request, user_id):
+        try:
+            try:          
+                user = User.objects.get(id=user_id)
+            except User.DoesNotExist:
+                return Response({"message": "해당 유저가 존재하지 않습니다."}, 
+                                status=status.HTTP_404_NOT_FOUND)
+            
+            posts = White.objects.filter(user=user)
+            if not posts.exists():
+                    return Response({
+                        "message": "해당 유저의 게시글이 없습니다",
+                        "data": {
+                            "nickname": user.nickname,
+                            "user_id": user.id,
+                            "posts": []
+                        }
+                    }, status=status.HTTP_200_OK)
+            serializer = WhiteSerializer(posts, many=True)
 
-        return Response({
-            "message": "화이트 공유페이지 조회 성공",
-            "data": {
-                "nickname": nickname,
-                "posts": serializer.data
-            }
-        }, status=status.HTTP_200_OK)
+            return Response({
+                "message": "화이트 공유페이지 조회 성공",
+                "data": {
+                    "nickname": user.nickname,
+                    "user_id": user.id,
+                    "posts": serializer.data
+                }
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response({
+                "message": "서버 내부 오류가 발생했습니다.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
