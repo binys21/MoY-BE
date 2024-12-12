@@ -15,6 +15,14 @@ import graduation
 
 bucket_name = getattr(graduation.settings.base, 'AWS_STORAGE_BUCKET_NAME')
 
+from graduation.settings.base import redis_client
+def get_black_search_history(user_id):
+    redis_key = f"user:{user_id}:black"
+    return redis_client.lrange(redis_key, 0, -1)  # 리스트의 모든 요소 반환
+def get_white_search_history(user_id):
+    redis_key = f"user:{user_id}:white"
+    return redis_client.lrange(redis_key, 0, -1)
+
 class BlackHomeView(APIView):
     def get_permissions(self):
         if self.request.method == 'POST':
@@ -178,3 +186,47 @@ class WhiteHomeView(APIView):
             "message": "화이트 등록 실패",
             "error": serializer.errors
         }, status=status.HTTP_400_BAD_REQUEST)
+
+class BlackHistoryView(APIView):
+    def get(self, request):
+        try:
+            if request.user.is_authenticated:
+                user_id = request.user.username
+                search_history = get_black_search_history(user_id)
+                return Response({
+                    "message": "최근 검색어 조회 성공",
+                    "data": search_history
+                }, status=200)
+            else:
+                return Response({
+                    "message": "로그인하지 않은 사용자입니다",
+                    "data": []
+                }, status=200)
+            
+        except Exception as e:
+            return Response({
+                "message": "최근 검색어 조회 실패",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class WhiteHistoryView(APIView):
+    def get(self, request):
+        try:
+            if request.user.is_authenticated:
+                user_id = request.user.username
+                search_history = get_white_search_history(user_id)
+                return Response({
+                    "message": "최근 검색어 조회 성공",
+                    "data": search_history
+                }, status=200)
+            else:
+                return Response({
+                    "message": "로그인하지 않은 사용자입니다",
+                    "data": []
+                }, status=200)
+            
+        except Exception as e:
+            return Response({
+                "message": "최근 검색어 조회 실패",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

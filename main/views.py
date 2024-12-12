@@ -10,6 +10,26 @@ from .models import *
 from .serializers import *
 from django.db.models import Q
 
+from graduation.settings.base import redis_client
+
+def save_black_search_keyword(user_id, keyword):
+    redis_key = f"user:{user_id}:black"
+    
+    # 중복 검색어 제거
+    redis_client.lrem(redis_key, 0, keyword)
+    
+    # 검색어 추가
+    redis_client.lpush(redis_key, keyword)
+    
+    # 최근 5개까지만 유지
+    redis_client.ltrim(redis_key, 0, 4)
+
+def save_white_search_keyword(user_id, keyword):
+    redis_key = f"user:{user_id}:white"
+    redis_client.lrem(redis_key, 0, keyword)
+    redis_client.lpush(redis_key, keyword)
+    redis_client.ltrim(redis_key, 0, 4)
+
 class PostListPagination(PageNumberPagination):
     page_size = 10  
 
@@ -81,7 +101,8 @@ class BlackPostSearchView(APIView):
     def get(self,request):
         try:
             keyword = request.GET.get('keyword', '')
-            
+            if request.user.is_authenticated:
+                save_black_search_keyword(request.user.username,keyword)            
             posts = Black.objects.filter(
                 Q(category__icontains=keyword) |  # 분야 검색
                 Q(name__icontains=keyword) |    # 제목 검색
@@ -111,9 +132,9 @@ class BlackPostSearchView(APIView):
             return Response(
                 {"message": "검색 성공","data": paginated_response},
                 status=status.HTTP_200_OK)
-        except Exception:
+        except Exception as e: 
             return Response(
-                {"message":"잘못된 요청입니다. 파라미터를 확인해주세요"},
+                {"message":"잘못된 요청입니다. 파라미터를 확인해주세요","error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )    
 
@@ -122,6 +143,8 @@ class WhitePostSearchView(APIView):
     def get(self,request):
         try:
             keyword = request.GET.get('keyword', '')
+            if request.user.is_authenticated:
+                save_white_search_keyword(request.user.username,keyword)  
             
             posts = White.objects.filter(
                 Q(category__icontains=keyword) |  # 분야 검색
@@ -152,9 +175,9 @@ class WhitePostSearchView(APIView):
             return Response(
                 {"message": "검색 성공","data": paginated_response},
                 status=status.HTTP_200_OK)
-        except Exception:
+        except Exception as e: 
             return Response(
-                {"message":"잘못된 요청입니다. 파라미터를 확인해주세요"},
+                {"message":"잘못된 요청입니다. 파라미터를 확인해주세요","error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )    
         

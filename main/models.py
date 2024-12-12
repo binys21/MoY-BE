@@ -27,7 +27,7 @@ class Black(models.Model):
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=5)
     name = models.TextField()
     description = models.TextField(blank=True, null=True)
-    information = models.TextField()
+    information = models.TextField(blank=True, null=True)
     img = models.TextField()
     color = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(24)])

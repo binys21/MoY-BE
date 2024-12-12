@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 from datetime import timedelta
 import environ
+import redis
 
 import pymysql  
 pymysql.install_as_MySQLdb()
@@ -133,6 +134,7 @@ TEMPLATES = [
     },
 ]
 
+
 WSGI_APPLICATION = "graduation.wsgi.application"
 
 
@@ -194,3 +196,7 @@ KAKAO_PASSWORD = env('KAKAO_PASSWORD')
 AWS_S3_ACCESS_KEY_ID = env('AWS_S3_ACCESS_KEY_ID')
 AWS_S3_SECRET_ACCESS_KEY = env('AWS_S3_SECRET_ACCESS_KEY')
 AWS_STORAGE_BUCKET_NAME = env('AWS_STORAGE_BUCKET_NAME')
+REDIS_HOST = env('REDIS_HOST')
+REDIS_PORT = env('REDIS_PORT')
+
+redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
