@@ -193,9 +193,11 @@ class BlackHistoryView(APIView):
             if request.user.is_authenticated:
                 user_id = request.user.username
                 search_history = get_black_search_history(user_id)
+                formatted_history = [{"keyword": keyword} for keyword in search_history]
+                
                 return Response({
                     "message": "최근 검색어 조회 성공",
-                    "data": search_history
+                    "data": formatted_history
                 }, status=200)
             else:
                 return Response({
@@ -215,9 +217,10 @@ class WhiteHistoryView(APIView):
             if request.user.is_authenticated:
                 user_id = request.user.username
                 search_history = get_white_search_history(user_id)
+                formatted_history = [{"keyword": keyword} for keyword in search_history]
                 return Response({
                     "message": "최근 검색어 조회 성공",
-                    "data": search_history
+                    "data": formatted_history
                 }, status=200)
             else:
                 return Response({
