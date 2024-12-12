@@ -9,6 +9,8 @@ services:
     command: gunicorn graduation.wsgi:application --bind 0.0.0.0:8000
     environment:
       DJANGO_SETTINGS_MODULE: graduation.settings.prod
+      REDIS_HOST: redis  # Redis 호스트 환경 변수 추가
+      REDIS_PORT: 6379   # Redis 포트 환경 변수 추가
     env_file:
       - .env
     volumes:
@@ -19,6 +21,8 @@ services:
     entrypoint:
       - sh
       - config/docker/entrypoint.prod.sh 
+    depends_on:
+      - redis  # Redis 서비스 의존성 추가
 
   nginx:
     container_name: nginx
@@ -30,6 +34,12 @@ services:
       - "80:80"
     depends_on:
       - web
+
+  redis:
+    container_name: redis
+    image: redis:latest  # Redis 최신 버전 사용
+    ports:
+      - "6379:6379"       # Redis 컨테이너와 호스트 포트 연결
 
 volumes:
   static:
