@@ -176,3 +176,7 @@ class LogoutView(views.APIView):
 
         except Exception as e:
             return Response({"message": str(e)}, status=HTTP_500_INTERNAL_SERVER_ERROR)
+        
+class DuplicateUsernameView(views.APIView):
+    def post(self, request):
+        return Response({'message': "아이디 중복 확인 성공","data":{"duplicate":User.objects.filter(username=request.data['username']).exists()}}, status=HTTP_200_OK)
