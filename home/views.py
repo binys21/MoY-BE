@@ -250,15 +250,23 @@ def search_books(query, display=20, start=1, sort='sim'):
         "start": start,     # 시작 위치
         "sort": sort        # 정렬 방식
     }
-    
-    response = requests.get(url, headers=headers, params=params)
-    images = [{"img": item["image"]} for item in response.json().get("items", []) if item.get("image")]
-
-    # 응답 확인
-    if response.status_code == 200:
-        return images  # JSON 결과 반환
-    else:
-        print(f"Error: {response.status_code}, {response.text}")
+    try:
+        response = requests.get(url, headers=headers, params=params)
+        items = response.json().get("items", [])
+        results = [
+                {
+                    "img": item.get("image"),
+                    "information": item.get("author", "")
+                }
+                for item in items if item.get("image")
+            ]
+        return results
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Request failed: {e}")
+        return None
+    except ValueError as e:
+        print(f"Failed to parse JSON: {e}")
         return None
 
 def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
@@ -276,7 +284,7 @@ def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
     }
     
     response = requests.get(url, headers=headers, params=params)
-    images = [{"img": item["link"]} for item in response.json().get("items", []) if item.get("link")]
+    images = [{"img": item["link"], "information": ""} for item in response.json().get("items", []) if item.get("link")]
 
     # 응답 확인
     if response.status_code == 200:
@@ -284,38 +292,6 @@ def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
     else:
         print(f"Error: {response.status_code}, {response.text}")
         return None
-
-
-    url = f"http://www.maniadb.com/api/search/{query}/"
-    params = {
-        'key': MANIADB_API_KEY,  # API 키
-        'v': '0.5',             # API 버전
-        'type': 'json',         # 응답 형식
-        'display': 10,          # 결과 개수 (기본값: 10)
-        'page': page            # 페이지 번호
-    }
-    
-    response = requests.get(url, params=params)
-    print(response.status_code)
-    print(response.text)
-    
-    # 응답 확인
-    if response.status_code == 200:
-        content = response.content.decode('utf-8-sig')
-        result = json.loads(content)  # BOM 처리 후 JSON 파싱
-        covers = [{"img": item["cover"]} for item in result.get("item", []) if "cover" in item]
-        return covers
-    else:
-        print(f"Error: {response.status_code}, {response.text}")
-        return None
-
-    try:
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200 and "image" in response.headers.get("Content-Type", ""):
-            return True
-        return False
-    except requests.RequestException:
-        return False
 
 # 이미지 유효성 확인
 def is_valid_image(url):
