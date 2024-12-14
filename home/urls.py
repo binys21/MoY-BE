@@ -9,4 +9,5 @@ urlpatterns = [
     path('white/', WhiteHomeView.as_view()),
     path('black/search/history/', BlackHistoryView.as_view()),
     path('white/search/history/', WhiteHistoryView.as_view()),
+    path('img/', ImgSearch.as_view()),
 ]

@@ -233,3 +233,140 @@ class WhiteHistoryView(APIView):
                 "message": "최근 검색어 조회 실패",
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+import requests
+NAVER_CLIENT_ID = getattr(graduation.settings.base, 'NAVER_CLIENT_ID')
+NAVER_CLIENT_SECRET = getattr(graduation.settings.base, 'NAVER_CLIENT_SECRET')
+
+def search_books(query, display=20, start=1, sort='sim'):
+    url = "https://openapi.naver.com/v1/search/book.json"
+    headers = {
+        "X-Naver-Client-Id": NAVER_CLIENT_ID,
+        "X-Naver-Client-Secret": NAVER_CLIENT_SECRET
+    }
+    params = {
+        "query": query,    # 검색어
+        "display": display,  # 한 번에 가져올 결과 개수
+        "start": start,     # 시작 위치
+        "sort": sort        # 정렬 방식
+    }
+    
+    response = requests.get(url, headers=headers, params=params)
+    images = [{"img": item["image"]} for item in response.json().get("items", []) if item.get("image")]
+
+    # 응답 확인
+    if response.status_code == 200:
+        return images  # JSON 결과 반환
+    else:
+        print(f"Error: {response.status_code}, {response.text}")
+        return None
+
+def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
+    url = "https://openapi.naver.com/v1/search/image"
+    headers = {
+        "X-Naver-Client-Id": NAVER_CLIENT_ID,
+        "X-Naver-Client-Secret": NAVER_CLIENT_SECRET
+    }
+    params = {
+        "query": query,    # 검색어
+        "display": display,  # 한 번에 가져올 결과 개수
+        "start": start,     # 시작 위치
+        "sort": sort,       # 정렬 방식
+        "filter": filter    # 이미지 필터
+    }
+    
+    response = requests.get(url, headers=headers, params=params)
+    images = [{"img": item["link"]} for item in response.json().get("items", []) if item.get("link")]
+
+    # 응답 확인
+    if response.status_code == 200:
+        return images  # JSON 결과 반환
+    else:
+        print(f"Error: {response.status_code}, {response.text}")
+        return None
+
+
+    url = f"http://www.maniadb.com/api/search/{query}/"
+    params = {
+        'key': MANIADB_API_KEY,  # API 키
+        'v': '0.5',             # API 버전
+        'type': 'json',         # 응답 형식
+        'display': 10,          # 결과 개수 (기본값: 10)
+        'page': page            # 페이지 번호
+    }
+    
+    response = requests.get(url, params=params)
+    print(response.status_code)
+    print(response.text)
+    
+    # 응답 확인
+    if response.status_code == 200:
+        content = response.content.decode('utf-8-sig')
+        result = json.loads(content)  # BOM 처리 후 JSON 파싱
+        covers = [{"img": item["cover"]} for item in result.get("item", []) if "cover" in item]
+        return covers
+    else:
+        print(f"Error: {response.status_code}, {response.text}")
+        return None
+
+    try:
+        response = requests.get(url, timeout=5)
+        if response.status_code == 200 and "image" in response.headers.get("Content-Type", ""):
+            return True
+        return False
+    except requests.RequestException:
+        return False
+
+# 이미지 유효성 확인
+def is_valid_image(url):
+    try:
+        response = requests.get(url, timeout=2)
+        return response.status_code == 200 and "image" in response.headers.get("Content-Type", "")
+    except requests.RequestException:
+        return False
+from concurrent.futures import ThreadPoolExecutor
+def filter_valid_images(image_list):
+    with ThreadPoolExecutor() as executor:
+        results = list(executor.map(lambda item: (item, is_valid_image(item["img"])), image_list))
+        return [item for item, is_valid in results if is_valid]
+    
+
+class ImgSearch(APIView):
+    def post(self,request):
+        category = request.GET.get('category')
+        keyword = request.GET.get('keyword')
+
+        try:
+            result=None
+            if category == "영화":
+                result = search_naver_images(keyword+" 포스터")
+            elif category == "음악":
+                result = search_naver_images(keyword+" 앨범 커버")
+            elif category == "책":
+                result = search_books(keyword)
+            elif category == "유투브":
+                result = search_naver_images(keyword+" youtube")
+            elif category == "OTT":
+                result = search_naver_images(keyword+"포스터")
+            elif category == "공연":
+                result = search_naver_images(keyword+"포스터")
+            
+
+            if result is None:
+                Response({
+                "message": f"{category} 이미지 검색 실패",
+            }, status=status.HTTP_400_BAD_REQUEST)
+            
+            # result = filter_valid_images(result)
+
+            return Response({
+                "message": f"{category} 이미지 검색 성공",
+                "data": result
+            }, status=status.HTTP_200_OK)
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return Response({
+                "message": "서버 내부 오류가 발생했습니다.",
+                "error": str(e)
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
