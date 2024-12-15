@@ -12,6 +12,9 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .storages import FileUpload, s3_client
 import os
 import graduation
+from django.http import JsonResponse
+from googleapiclient.discovery import build
+
 
 bucket_name = getattr(graduation.settings.base, 'AWS_STORAGE_BUCKET_NAME')
 
@@ -321,6 +324,38 @@ def filter_valid_images(image_list):
         return [item for item, is_valid in results if is_valid]
     
 
+API_KEY = getattr(graduation.settings.base, 'API_KEY')
+YOUTUBE_API_SERVICE_NAME =getattr(graduation.settings.base, 'YOUTUBE_API_SERVICE_NAME')
+YOUTUBE_API_VERSION = getattr(graduation.settings.base, 'YOUTUBE_API_VERSION')
+
+
+def search_videos(query, display=20, start=1, sort='sim'):
+    youtube = build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, developerKey=API_KEY)
+
+    search_response = youtube.search().list(
+        q=query,
+        part='snippet',
+        maxResults=display,
+        type='video'
+    ).execute()
+
+    videos = []
+    for item in search_response.get('items', []):
+        video_data = {
+            'thumbnail': item['snippet']['thumbnails']['default']['url'],
+            'title': item['snippet']['title'],
+        }
+        videos.append(video_data)
+
+    result = [
+        {
+            'img': video['thumbnail'],
+            'information': video['title']
+        } for video in videos
+    ]
+
+    return result
+
 class ImgSearch(APIView):
     def post(self,request):
         category = request.GET.get('category')
@@ -335,7 +370,7 @@ class ImgSearch(APIView):
             elif category == "책":
                 result = search_books(keyword)
             elif category == "유투브":
-                result = search_naver_images(keyword+" youtube")
+                result = search_videos(keyword)
             elif category == "OTT":
                 result = search_naver_images(keyword+"포스터")
             elif category == "공연":
