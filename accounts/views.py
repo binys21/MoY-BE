@@ -180,3 +180,8 @@ class LogoutView(views.APIView):
 class DuplicateUsernameView(views.APIView):
     def post(self, request):
         return Response({'message': "아이디 중복 확인 성공","data":{"duplicate":User.objects.filter(username=request.data['username']).exists()}}, status=HTTP_200_OK)
+
+class HealthView(views.APIView):
+    @api_view(['GET','POST'])
+    def health(request):
+        return Response(status=HTTP_200_OK)
