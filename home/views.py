@@ -33,12 +33,12 @@ class BlackHomeView(APIView):
         return [AllowAny()]
         
     def get(self, request):
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and Black.objects.filter(user=request.user).count() > 3:
             message = "로그인한 사용자 블랙 메인화면 조회 성공"
             posts = Black.objects.filter(user=request.user).order_by('?')
             nickname=request.user.nickname
         else:
-            message = "비로그인 사용자 블랙 메인화면 조회 성공"
+            message = "랜덤 블랙 메인화면 조회 성공"
             eligible_users = (
                 Black.objects.values('user')
                 .annotate(black_count=Count('id'))
@@ -123,12 +123,12 @@ class WhiteHomeView(APIView):
             return [IsAuthenticated()]
         return [AllowAny()]
     def get(self, request):
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and White.objects.filter(user=request.user).count() > 3:
             message = "로그인한 사용자 화이트 메인화면 조회 성공"
             posts = White.objects.filter(user=request.user).order_by('?')
             nickname=request.user.nickname
         else:
-            message = "비로그인 사용자 화이트 메인화면 조회 성공"
+            message = "랜덤 화이트 메인화면 조회 성공"
             eligible_users = (
                 White.objects.values('user')
                 .annotate(white_count=Count('id'))
