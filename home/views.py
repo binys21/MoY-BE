@@ -16,7 +16,7 @@ from django.http import JsonResponse
 from googleapiclient.discovery import build
 
 
-bucket_name = getattr(graduation.settings.base, 'AWS_STORAGE_BUCKET_NAME')
+cloudfront_url=getattr(graduation.settings.base, 'CLOUDFRONT_URL')
 
 from graduation.settings.base import redis_client
 def get_black_search_history(user_id):
@@ -93,8 +93,9 @@ class BlackHomeView(APIView):
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
                 folder = f"{request.user.id}_{request.user.username}_img/black/{instance.id}{ext}"
                 file_url = FileUpload(s3_client).upload(file, folder)
+                url=cloudfront_url+folder
 
-                instance.img = file_url
+                instance.img = url
                 instance.save()
 
                 response_data = serializer.data 
@@ -182,8 +183,9 @@ class WhiteHomeView(APIView):
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
                 folder = f"{request.user.id}_{request.user.username}_img/white/{instance.id}{ext}"
                 file_url = FileUpload(s3_client).upload(file, folder)
+                url=cloudfront_url+folder
 
-                instance.img = file_url
+                instance.img = url
                 instance.save()
 
                 response_data = serializer.data 
