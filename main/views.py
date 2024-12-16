@@ -54,6 +54,12 @@ class BlackListView(APIView):
                 response_data = paginator.get_paginated_response(serializer.data).data
                 response_data['total_pages'] = total_pages
 
+                user_post_count = ""
+                user = request.user
+                if user:
+                    user_post_count = Black.objects.filter(user=user).count()
+                response_data['user_post_count'] = user_post_count
+
                 return Response({
                     "message": "블랙 분야별 목록 조회 성공",
                     "data": response_data
@@ -89,6 +95,11 @@ class WhiteListView(APIView):
             total_pages = (paginator.page.paginator.count + paginator.page_size - 1) // paginator.page_size
             paginated_response = paginator.get_paginated_response(serializer.data).data
             paginated_response['total_pages'] = total_pages
+            user_post_count = ""
+            user = request.user
+            if user:
+                user_post_count = White.objects.filter(user=user).count()
+            paginated_response['user_post_count'] = user_post_count
 
             return Response({
                 "message": "화이트 분야별 목록 조회 성공",
