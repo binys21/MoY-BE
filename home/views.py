@@ -396,8 +396,8 @@ def get_credits(media_type, item_id):
         print(f"Error during TMDb details fetch: {e}")
         return None, []
 
-def search_tmdb_poster(keyword):
-    url = "https://api.themoviedb.org/3/search/multi"
+def search_tmdb_poster(keyword, type):
+    url = f"https://api.themoviedb.org/3/search/{type}"
     params = {
         "api_key": TMDB_API_KEY,
         "query": keyword,
@@ -408,13 +408,14 @@ def search_tmdb_poster(keyword):
         response.raise_for_status()
         data = response.json()
         information=""
+        print(data)
         
         results = [
             { #크기 다른 옵션도 가능함 일단 w500으로 설정
                 "img": f"https://image.tmdb.org/t/p/w500{item.get('poster_path')}",
                 "name": item.get("name") or item.get("title"),
                 "id": item.get("id"),
-                "media_type": item.get("media_type")
+                "media_type": item.get("media_type", "movie")
             }
             for item in data.get("results", []) if item.get("poster_path")
         ]
@@ -434,9 +435,6 @@ def search_tmdb_poster(keyword):
         print(f"TMDb API Error: {e}")
         return None
 
-
-
-
 class ImgSearch(APIView):
     def get(self,request):
         category = request.GET.get('category')
@@ -445,7 +443,8 @@ class ImgSearch(APIView):
         try:
             result=None
             if category == "영화":
-                result = search_tmdb_poster(keyword)
+                type="movie"
+                result = search_tmdb_poster(keyword, type)
             elif category == "음악":
                 result = search_naver_images(keyword+" 앨범 커버")
             elif category == "책":
@@ -453,7 +452,8 @@ class ImgSearch(APIView):
             elif category == "유튜브":
                 result = search_videos(keyword)
             elif category == "OTT":
-                result = search_tmdb_poster(keyword)
+                type="multi"
+                result = search_tmdb_poster(keyword, type)
             elif category == "공연":
                 result = search_naver_images(keyword+"포스터")
             
@@ -476,3 +476,4 @@ class ImgSearch(APIView):
                 "message": "서버 내부 오류가 발생했습니다.",
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
