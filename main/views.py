@@ -10,7 +10,6 @@ from .pagination import PaginationHandlerMixin, PostListPagination
 from .models import *
 from .serializers import *
 from django.db.models import Q
-
 from graduation.settings.base import redis_client
 
 def save_black_search_keyword(user_id, keyword):
@@ -34,10 +33,7 @@ def save_white_search_keyword(user_id, keyword):
 class PostListPagination(PageNumberPagination):
     page_size = 10  
 
-
-class BlackListView(APIView, PaginationHandlerMixin):
-    pagination_class = PostListPagination
-
+class BlackListView(APIView):
     def get(self, request, category):
         try:
             posts = Black.objects.filter(category=category).order_by('-id')
@@ -48,25 +44,26 @@ class BlackListView(APIView, PaginationHandlerMixin):
                     "data": []
                 }, status=status.HTTP_200_OK)
 
-            paginated_posts = self.paginate_queryset(posts)
+            paginator = PostListPagination()
+            paginated_posts = paginator.paginate_queryset(posts, request)
+
             if paginated_posts is not None:
                 serializer = BlackSerializer(paginated_posts, many=True)
-                total_pages = math.ceil(posts.count() / self.paginator.page_size)
+                total_pages = (paginator.page.paginator.count + paginator.page_size - 1) // paginator.page_size
 
-                paginated_response = self.get_paginated_response(serializer.data).data
-                paginated_response["total_pages"] = total_pages
-                paginated_response["count"] = posts.count() 
-                paginated_response["page"] = self.paginator.page.number  
+                response_data = paginator.get_paginated_response(serializer.data).data
+                response_data['total_pages'] = total_pages
 
                 return Response({
                     "message": "블랙 분야별 목록 조회 성공",
-                    "data": paginated_response
+                    "data": response_data
                 }, status=status.HTTP_200_OK)
 
             return Response({
                 "message": "페이지네이션 처리된 데이터가 없습니다.",
                 "data": []
             }, status=status.HTTP_200_OK)
+
         except Exception as e:
             print(f"Error: {e}")
             return Response({
