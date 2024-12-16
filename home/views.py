@@ -275,7 +275,8 @@ def search_books(query, display=20, start=1, sort='sim'):
         results = [
                 {
                     "img": item.get("image"),
-                    "information": item.get("author", "")
+                    "information": item.get("author", ""),
+                    "name": item.get("title")
                 }
                 for item in items if item.get("image")
             ]
@@ -303,7 +304,7 @@ def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
     }
     
     response = requests.get(url, headers=headers, params=params)
-    images = [{"img": item["link"], "information": ""} for item in response.json().get("items", []) if item.get("link")]
+    images = [{"img": item["link"], "information": "", "name": ""} for item in response.json().get("items", []) if item.get("link")]
 
     # 응답 확인
     if response.status_code == 200:
@@ -340,21 +341,16 @@ def search_videos(query, display=20, start=1, sort='sim'):
         maxResults=display,
         type='video'
     ).execute()
-
-    videos = []
+    
+    result = []
     for item in search_response.get('items', []):
         video_data = {
-            'thumbnail': item['snippet']['thumbnails']['high']['url'],
-            'title': item['snippet']['title'],
-        }
-        videos.append(video_data)
+            'img': item['snippet']['thumbnails']['high']['url'],
+            'information': item['snippet']['title'],
+            'name': item['snippet']['channelTitle']
 
-    result = [
-        {
-            'img': video['thumbnail'],
-            'information': video['title']
-        } for video in videos
-    ]
+        }
+        result.append(video_data)
 
     return result
 
@@ -408,7 +404,6 @@ def search_tmdb_poster(keyword, type):
         response.raise_for_status()
         data = response.json()
         information=""
-        print(data)
         
         results = [
             { #크기 다른 옵션도 가능함 일단 w500으로 설정
