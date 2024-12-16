@@ -46,18 +46,20 @@ class BlackListView(APIView):
 
             paginator = PostListPagination()
             paginated_posts = paginator.paginate_queryset(posts, request)
-            serializer = BlackSerializer(paginated_posts, many=True)
-            
-            total_pages = (paginator.page.paginator.count + paginator.page_size - 1) // paginator.page_size
-            paginated_response = paginator.get_paginated_response(serializer.data).data
-            paginated_response['total_pages'] = total_pages
+        
+            if paginated_posts is not None:
+                serializer = BlackSerializer(paginated_posts, many=True)
+                paginated_response = paginator.get_paginated_response(serializer.data).data
+                paginated_response['total_pages'] = (posts.count() + paginator.page_size - 1) // paginator.page_size
+            else:
+                paginated_response = {"results": [], "total_pages": 0}
+
 
             return Response({
                 "message": "블랙 분야별 목록 조회 성공",
                 "data": paginated_response},status=status.HTTP_200_OK
             )
         except Exception as e:
-            # 예외 처리
             print(f"Error: {e}")
             return Response({
                 "message": "서버 내부 오류가 발생했습니다.",
