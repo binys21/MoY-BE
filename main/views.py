@@ -314,7 +314,6 @@ class WhiteMypageView(APIView):
     
 
 class BlackShareView(APIView):
-    permission_classes=[IsAuthenticated]
     def get(self, request, user_id):
         try:
             try:          
@@ -354,7 +353,6 @@ class BlackShareView(APIView):
 
 
 class WhiteShareView(APIView):
-    permission_classes=[IsAuthenticated]
     def get(self, request, user_id):
         try:
             try:          
