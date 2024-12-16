@@ -400,7 +400,7 @@ class ImgSearch(APIView):
                 result = search_naver_images(keyword+" 앨범 커버")
             elif category == "책":
                 result = search_books(keyword)
-            elif category == "유투브":
+            elif category == "유튜브":
                 result = search_videos(keyword)
             elif category == "OTT":
                 result = search_tmdb_poster(keyword)
