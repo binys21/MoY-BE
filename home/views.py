@@ -359,26 +359,76 @@ def search_videos(query, display=20, start=1, sort='sim'):
     return result
 
 TMDB_API_KEY = getattr(graduation.settings.base, 'TMDB_API_KEY')
+def get_credits(media_type, item_id):
+    """
+    TMDb API로 작품의 감독 이름과 주요 배우 2명을 가져옴
+    """
+    detail_url = f"https://api.themoviedb.org/3/{media_type}/{item_id}"
+    params = {
+        "api_key": TMDB_API_KEY,
+        "append_to_response": "credits",
+        "language": "ko-KR"
+    }
+    try:
+        response = requests.get(detail_url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        return_data="" 
+
+        # 감독 이름
+        director = None
+        for crew in data.get("credits", {}).get("crew", []):
+            if crew.get("job") == "Director":
+                director = crew.get("name")
+                break
+        
+        # 배우 이름 추출 (최대 2명)
+        cast = [actor.get("name") for actor in data.get("credits", {}).get("cast", [])[:2]]
+        if director:
+            return_data = f"{director} | {', '.join(cast)}"
+        else:
+            return_data = ", ".join(cast)
+
+        return return_data
+
+    except requests.exceptions.RequestException as e:
+        print(f"Error during TMDb details fetch: {e}")
+        return None, []
+
 def search_tmdb_poster(keyword):
     url = "https://api.themoviedb.org/3/search/multi"
     params = {
         "api_key": TMDB_API_KEY,
-        "query": keyword
+        "query": keyword,
+        "language": "ko-KR"
     }
     try:
         response = requests.get(url, params=params)
         response.raise_for_status()
         data = response.json()
+        information=""
         
         results = [
             { #크기 다른 옵션도 가능함 일단 w500으로 설정
                 "img": f"https://image.tmdb.org/t/p/w500{item.get('poster_path')}",
-                "information": item.get("name") or item.get("title")
+                "name": item.get("name") or item.get("title"),
+                "id": item.get("id"),
+                "media_type": item.get("media_type")
             }
             for item in data.get("results", []) if item.get("poster_path")
         ]
+        enriched_results = []
+        for item in results:
+            information = get_credits(item["media_type"], item["id"])
+
+            enriched_results.append({
+                "img": item["img"],
+                "information": information,
+                "name": item["name"]
+            })
         
-        return results
+        return enriched_results
     
     except requests.exceptions.RequestException as e:
         print(f"TMDb API Error: {e}")
@@ -395,7 +445,7 @@ class ImgSearch(APIView):
         try:
             result=None
             if category == "영화":
-                result = search_naver_images(keyword+" 포스터")
+                result = search_tmdb_poster(keyword)
             elif category == "음악":
                 result = search_naver_images(keyword+" 앨범 커버")
             elif category == "책":
