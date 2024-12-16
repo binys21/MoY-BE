@@ -356,6 +356,35 @@ def search_videos(query, display=20, start=1, sort='sim'):
 
     return result
 
+TMDB_API_KEY = getattr(graduation.settings.base, 'TMDB_API_KEY')
+def search_tmdb_poster(keyword):
+    url = "https://api.themoviedb.org/3/search/multi"
+    params = {
+        "api_key": TMDB_API_KEY,
+        "query": keyword
+    }
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        
+        results = [
+            { #크기 다른 옵션도 가능함 일단 w500으로 설정
+                "img": f"https://image.tmdb.org/t/p/w500{item.get('poster_path')}",
+                "information": item.get("name") or item.get("title")
+            }
+            for item in data.get("results", []) if item.get("poster_path")
+        ]
+        
+        return results
+    
+    except requests.exceptions.RequestException as e:
+        print(f"TMDb API Error: {e}")
+        return None
+
+
+
+
 class ImgSearch(APIView):
     def get(self,request):
         category = request.GET.get('category')
@@ -372,7 +401,7 @@ class ImgSearch(APIView):
             elif category == "유투브":
                 result = search_videos(keyword)
             elif category == "OTT":
-                result = search_naver_images(keyword+"포스터")
+                result = search_tmdb_poster(keyword)
             elif category == "공연":
                 result = search_naver_images(keyword+"포스터")
             
