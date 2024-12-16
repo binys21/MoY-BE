@@ -322,7 +322,7 @@ def filter_valid_images(image_list):
     
 
 class ImgSearch(APIView):
-    def post(self,request):
+    def get(self,request):
         category = request.GET.get('category')
         keyword = request.GET.get('keyword')
 
