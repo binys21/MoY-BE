@@ -54,7 +54,10 @@ class BlackListView(APIView, PaginationHandlerMixin):
                 total_pages = math.ceil(posts.count() / self.paginator.page_size)
 
                 paginated_response = self.get_paginated_response(serializer.data).data
-                paginated_response["total_pages"] = total_pages  
+                paginated_response["total_pages"] = total_pages
+                paginated_response["count"] = posts.count() 
+                paginated_response["page"] = self.paginator.page.number  
+
                 return Response({
                     "message": "블랙 분야별 목록 조회 성공",
                     "data": paginated_response
