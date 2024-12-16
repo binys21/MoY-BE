@@ -55,9 +55,8 @@ class BlackListView(APIView):
                 response_data['total_pages'] = total_pages
 
                 user_post_count = ""
-                user = request.user
-                if user:
-                    user_post_count = Black.objects.filter(user=user).count()
+                if request.user.is_authenticated:
+                    user_post_count = Black.objects.filter(user=request.user).count()
                 response_data['user_post_count'] = user_post_count
 
                 return Response({
@@ -96,9 +95,8 @@ class WhiteListView(APIView):
             paginated_response = paginator.get_paginated_response(serializer.data).data
             paginated_response['total_pages'] = total_pages
             user_post_count = ""
-            user = request.user
-            if user:
-                user_post_count = White.objects.filter(user=user).count()
+            if request.user.is_authenticated:
+                user_post_count = White.objects.filter(user=request.user).count()
             paginated_response['user_post_count'] = user_post_count
 
             return Response({
