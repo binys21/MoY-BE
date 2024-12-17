@@ -487,6 +487,36 @@ def search_lastfm_album_info(keyword):
         print("앨범 또는 가수 정보를 찾을 수 없습니다.")
         return None
 
+def search_lastfm_song(keyword):
+    # 노래 제목 검색
+    url=f'https://ws.audioscrobbler.com/2.0/?method=track.search&api_key={LASTFM_API_KEY}&track={keyword}&format=json'
+    # 가수 검색
+    # url=f'https://ws.audioscrobbler.com/2.0/?method=artist.search&api_key={LASTFM_API_KEY}&artist={keyword}&format=json'
+
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        data = response.json()
+        print(data)
+        tracks = data['results']['trackmatches']['track']
+
+        return [
+            {
+                "info": track.get("artist", "가수 없음"),  # 가수 이름 추출
+                "name": track.get("name", "제목 없음"),    # 곡 제목 추출
+                "album_cover": next(                     # 'small' 사이즈 이미지 추출
+                    (img.get("#text") for img in track.get("image", []) if img.get("size") == "small"),
+                    "이미지 없음"  # 이미지가 없을 경우
+                )
+            }
+            for track in tracks[:10]  # 최대 10개 곡만 반환
+        ]
+
+    except requests.RequestException as e:
+        print(f"Last.fm API Error: {e}")
+        return None
+
+
 
 class ImgSearch(APIView):
     def get(self,request):
@@ -499,7 +529,7 @@ class ImgSearch(APIView):
                 type="movie"
                 result = search_tmdb_poster(keyword, type)
             elif category == "음악":
-                result = search_lastfm_album_info(keyword)
+                result = search_lastfm_song(keyword)
             elif category == "책":
                 result = search_books(keyword)
             elif category == "유튜브":
