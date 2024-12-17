@@ -327,7 +327,7 @@ def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
     else:
         print(f"Error: {response.status_code}, {response.text}")
         return None
-
+    
 # 이미지 유효성 확인
 def is_valid_image(url):
     try:
@@ -445,14 +445,13 @@ def search_tmdb_poster(keyword, type):
         return None
     
 
-TICKETMASTER_API_KEY = getattr(graduation.settings.base, 'TICKETMASTER_API_KEY', None)    
-def search_ticketmaster_events(keyword):
-    TICKETMASTER_API_KEY = os.getenv("TICKETMASTER_API_KEY")  
+TICKETMASTER_API_KEY = getattr(graduation.settings.base, 'TICKETMASTER_API_KEY')    
+def search_ticketmaster_events(keyword): 
     url = "https://app.ticketmaster.com/discovery/v2/events.json"
     params = {
         "keyword": keyword, 
         "apikey": TICKETMASTER_API_KEY,
-        "locale": "ko-KR"  #한국어
+        "locale": "ko-KR" 
     }
 
     try:
@@ -501,7 +500,7 @@ class ImgSearch(APIView):
                 type="multi"
                 result = search_tmdb_poster(keyword, type)
             elif category == "공연":
-                result = search_naver_images(keyword+"포스터")
+                result = search_ticketmaster_events(keyword)
             
 
             if result is None:
