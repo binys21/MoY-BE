@@ -304,7 +304,7 @@ def search_books(query, display=20, start=1, sort='sim'):
         print(f"Failed to parse JSON: {e}")
         return None
 
-def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
+def search_naver_images(query, display=15, start=1, sort='sim', filter='all'):
     url = "https://openapi.naver.com/v1/search/image"
     headers = {
         "X-Naver-Client-Id": NAVER_CLIENT_ID,
@@ -323,7 +323,8 @@ def search_naver_images(query, display=20, start=1, sort='sim', filter='all'):
 
     # 응답 확인
     if response.status_code == 200:
-        return images  # JSON 결과 반환
+        result = filter_valid_images(images)
+        return result  # JSON 결과 반환
     else:
         print(f"Error: {response.status_code}, {response.text}")
         return None
@@ -515,7 +516,6 @@ class ImgSearch(APIView):
                 "message": f"{category} 이미지 검색 실패",
             }, status=status.HTTP_400_BAD_REQUEST)
             
-            # result = filter_valid_images(result)
 
             return Response({
                 "message": f"{category} 이미지 검색 성공",
