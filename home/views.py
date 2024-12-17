@@ -560,7 +560,7 @@ def search_spotify_song(keyword):
             {
                 "name": track.get("name"),  # 노래 제목
                 "information": ", ".join(artist["name"] for artist in track.get("artists", [])),  # 가수 이름
-                "album_cover": track.get("album", {}).get("images", [{}])[0].get("url", "이미지 없음"),  # 앨범 이미지
+                "img": track.get("album", {}).get("images", [{}])[0].get("url", "이미지 없음"),  # 앨범 이미지
                
             }
             for track in tracks
