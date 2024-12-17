@@ -494,6 +494,46 @@ def search_ticketmaster_events(keyword):
         return None
 
 
+LASTFM_API_KEY = getattr(graduation.settings.base, 'LASTFM_API_KEY')   
+def search_lastfm_album_info(keyword):
+    if " - " in keyword:
+        parts = keyword.split(" - ")
+        
+        if len(parts) == 2 and parts[1] != "":  # 앨범이름&가수 같이 검색할 땐 '앨범이름 - 가수' 로 요청
+            album_name, artist_name = parts[0], parts[1]
+            url = f'http://ws.audioscrobbler.com/2.0/?method=album.getinfo&api_key={LASTFM_API_KEY}&album={album_name}&artist={artist_name}&format=json'
+        else:  # 가수명만 검색할 땐 ' - ' 붙여서 요청(공백도)
+            artist_name = parts[0]
+            url = f'http://ws.audioscrobbler.com/2.0/?method=artist.gettopalbums&api_key={LASTFM_API_KEY}&artist={artist_name}&format=json'
+    else:
+        # 앨범이름으로 검색
+        album_name = keyword
+        url = f'http://ws.audioscrobbler.com/2.0/?method=album.search&api_key={LASTFM_API_KEY}&album={album_name}&format=json'
+    
+    response = requests.get(url)
+    data = response.json()
+    print("Last.fm API Response:", data)
+
+    if 'album' in data:
+        album_info = data['album']
+        album_cover_url = album_info['image'][3]['#text'] if 'image' in album_info else ""
+        artist = album_info['artist']
+        album_title = album_info['name']
+
+        return {
+            "album_cover": album_cover_url,
+            "artist": artist,
+            "album_title": album_title,
+        }
+    elif 'topalbums' in data:
+        # 가수명만 검색했을 때
+        albums = data['topalbums']['album']
+        return [{"album_title": album['name'], "album_cover": album['image'][3]['#text'], "artist": artist_name} for album in albums[:15]]
+    else:
+        print("앨범 또는 가수 정보를 찾을 수 없습니다.")
+        return None
+
+
 class ImgSearch(APIView):
     def get(self,request):
         category = request.GET.get('category')
@@ -505,7 +545,7 @@ class ImgSearch(APIView):
                 type="movie"
                 result = search_tmdb_poster(keyword, type)
             elif category == "음악":
-                result = search_naver_images(keyword+" 앨범 커버")
+                result = search_lastfm_album_info(keyword)
             elif category == "책":
                 result = search_books(keyword)
             elif category == "유튜브":
