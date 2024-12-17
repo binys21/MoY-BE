@@ -516,7 +516,59 @@ def search_lastfm_song(keyword):
         print(f"Last.fm API Error: {e}")
         return None
 
+SPOTIFY_CLIENT_ID = getattr(graduation.settings.base, 'SPOTIFY_CLIENT_ID')   
+SPOTIFY_CLIENT_SECRET = getattr(graduation.settings.base, 'SPOTIFY_CLIENT_SECRET')   
+import base64
 
+def get_spotify_token(client_id, client_secret):
+    url = "https://accounts.spotify.com/api/token"
+    headers = {
+        "Authorization": "Basic " + base64.b64encode(f"{client_id}:{client_secret}".encode()).decode(),
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+    data = {"grant_type": "client_credentials"}
+
+    try:
+        response = requests.post(url, headers=headers, data=data)
+        response.raise_for_status()
+        access_token = response.json().get("access_token")
+        return access_token
+    except requests.exceptions.RequestException as e:
+        print(f"Spotify Token Error: {e}")
+        return None
+
+
+def search_spotify_song(keyword):
+    access_token = get_spotify_token(SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET)
+    if not access_token:
+        print("Access Token 발급 실패")
+        return None
+    headers = {"Authorization": f"Bearer {access_token}",  "Accept-Language": "ko-KR"}
+    params = {
+        "q": keyword,         # 검색 키워드
+        "type": "track",      # 노래 검색
+        "limit": 10           # 최대 10개 반환
+    }
+    try:
+        response = requests.get("https://api.spotify.com/v1/search", params=params, headers=headers)
+        response.raise_for_status()
+        data = response.json()
+
+        # 노래 정보 추출
+        tracks = data.get("tracks", {}).get("items", [])
+        results = [
+            {
+                "name": track.get("name"),  # 노래 제목
+                "information": ", ".join(artist["name"] for artist in track.get("artists", [])),  # 가수 이름
+                "album_cover": track.get("album", {}).get("images", [{}])[0].get("url", "이미지 없음"),  # 앨범 이미지
+               
+            }
+            for track in tracks
+        ]
+        return results
+    except requests.exceptions.RequestException as e:
+        print(f"Spotify API Error: {e}")
+        return None
 
 class ImgSearch(APIView):
     def get(self,request):
@@ -529,7 +581,7 @@ class ImgSearch(APIView):
                 type="movie"
                 result = search_tmdb_poster(keyword, type)
             elif category == "음악":
-                result = search_lastfm_song(keyword)
+                result = search_spotify_song(keyword)
             elif category == "책":
                 result = search_books(keyword)
             elif category == "유튜브":
