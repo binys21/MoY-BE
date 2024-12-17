@@ -14,6 +14,7 @@ import os
 import graduation
 from django.http import JsonResponse
 from googleapiclient.discovery import build
+from googletrans import Translator
 
 
 cloudfront_url=getattr(graduation.settings.base, 'CLOUDFRONT_URL')
@@ -444,14 +445,23 @@ def search_tmdb_poster(keyword, type):
         print(f"TMDb API Error: {e}")
         return None
     
+def translate_keyword_to_english(keyword):
+    translator = Translator()
+    translated = translator.translate(keyword, src='ko', dest='en')
+    print(f"Translated Keyword: {translated.text}") #번역된 키워드
+    return translated.text
+
 
 TICKETMASTER_API_KEY = getattr(graduation.settings.base, 'TICKETMASTER_API_KEY')    
 def search_ticketmaster_events(keyword): 
     url = "https://app.ticketmaster.com/discovery/v2/events.json"
+
+    translated_keyword = translate_keyword_to_english(keyword)
+
     params = {
-        "keyword": keyword, 
+        "keyword": translated_keyword, 
         "apikey": TICKETMASTER_API_KEY,
-        "locale": "ko-KR" 
+        "locale": "en-US" 
     }
 
     try:
@@ -473,6 +483,10 @@ def search_ticketmaster_events(keyword):
                     "venue": venue.get("name", "공연장 정보 없음"),  # 공연장 이름
                     "venue_address": f"{venue.get('city', {}).get('name', '')} {venue.get('address', {}).get('line1', '')}" # 공연장 
                 })
+
+        if not events:
+            print("Ticketmaster API에 이벤트가 없습니다.")
+            return []
         return events
 
     except requests.exceptions.RequestException as e:
