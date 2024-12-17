@@ -361,9 +361,8 @@ def search_videos(query, display=20, start=1, sort='sim'):
     for item in search_response.get('items', []):
         video_data = {
             'img': item['snippet']['thumbnails']['high']['url'],
-            'information': item['snippet']['title'],
-            'name': item['snippet']['channelTitle']
-
+            'information': item['snippet']['channelTitle'],
+            'name': item['snippet']['title']
         }
         result.append(video_data)
 
