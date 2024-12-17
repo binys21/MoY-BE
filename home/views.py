@@ -429,6 +429,43 @@ def search_tmdb_poster(keyword, type):
     except requests.exceptions.RequestException as e:
         print(f"TMDb API Error: {e}")
         return None
+    
+
+TICKETMASTER_API_KEY = getattr(graduation.settings.base, 'TICKETMASTER_API_KEY', None)    
+def search_ticketmaster_events(keyword):
+    TICKETMASTER_API_KEY = os.getenv("TICKETMASTER_API_KEY")  
+    url = "https://app.ticketmaster.com/discovery/v2/events.json"
+    params = {
+        "keyword": keyword, 
+        "apikey": TICKETMASTER_API_KEY,
+        "locale": "ko-KR"  #한국어
+    }
+
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+
+        events = []
+        for event in data.get("_embedded", {}).get("events", []): #이미지 
+            image_url = event.get("images", [])[0].get("url") if event.get("images") else None
+            venue = event.get("_embedded", {}).get("venues", [{}])[0]  # 공연장 
+            dates = event.get("dates", {}).get("start", {})
+
+            if image_url:
+                events.append({
+                    "img": image_url,
+                    "name": event.get("name"),  # 공연명
+                    "information": f"{dates.get('localDate', '날짜 정보 없음')} {dates.get('localTime', '')}",  # 날짜,시간
+                    "venue": venue.get("name", "공연장 정보 없음"),  # 공연장 이름
+                    "venue_address": f"{venue.get('city', {}).get('name', '')} {venue.get('address', {}).get('line1', '')}" # 공연장 
+                })
+        return events
+
+    except requests.exceptions.RequestException as e:
+        print(f"Ticketmaster API Error: {e}")
+        return None
+
 
 class ImgSearch(APIView):
     def get(self,request):

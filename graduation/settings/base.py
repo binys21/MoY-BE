@@ -207,5 +207,6 @@ YOUTUBE_API_VERSION = env('YOUTUBE_API_VERSION')
 
 TMDB_API_KEY = env('TMDB_API_KEY')
 CLOUDFRONT_URL = env('CLOUDFRONT_URL')
+TICKETMASTER_API_KEY=env('TICKETMASTER_API_KEY')
 
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)
