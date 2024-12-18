@@ -37,7 +37,7 @@ class BlackHomeView(APIView):
             if request.user.is_authenticated and Black.objects.filter(user=request.user).count() > 3:
                 message = "로그인한 사용자 블랙 메인화면 조회 성공"
                 posts = Black.objects.filter(user=request.user).order_by('?')
-                nickname=request.user.nickname
+
             else:
                 message = "랜덤 블랙 메인화면 조회 성공"
                 eligible_users = (
@@ -55,9 +55,11 @@ class BlackHomeView(APIView):
                 else:
                     posts = Black.objects.none()
                     nickname=""
+
             
             serializer = BlackSerializer(posts, many=True)
-            
+            if request.user.is_authenticated:
+                    nickname=request.user.nickname
             
             return Response({
                 "message": message,
@@ -135,7 +137,6 @@ class WhiteHomeView(APIView):
             if request.user.is_authenticated and White.objects.filter(user=request.user).count() > 3:
                 message = "로그인한 사용자 화이트 메인화면 조회 성공"
                 posts = White.objects.filter(user=request.user).order_by('?')
-                nickname=request.user.nickname
             else:
                 message = "랜덤 화이트 메인화면 조회 성공"
                 eligible_users = (
@@ -155,6 +156,8 @@ class WhiteHomeView(APIView):
                     nickname=""
     
             serializer = WhiteSerializer(posts, many=True)
+            if request.user.is_authenticated:
+                    nickname=request.user.nickname
     
             
             return Response({
