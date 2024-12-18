@@ -25,10 +25,10 @@ class Black(models.Model):
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=5)
-    name = models.TextField()
+    name = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
     information = models.TextField(blank=True, null=True)
-    img = models.TextField()
+    img = models.TextField(blank=True, null=True)
     color = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(24)])
     frame = models.CharField(choices=FRAME_CHOICES, max_length=5)
@@ -55,9 +55,9 @@ class White(models.Model):
     ]
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.CharField(choices=CATEGORY_CHOICES, max_length=5)
-    name = models.TextField()
+    name = models.TextField(blank=True, null=True)
     description = models.TextField(blank=True, null=True)
-    img = models.TextField()
+    img = models.TextField(blank=True, null=True)
     color = models.PositiveIntegerField(
         validators=[MinValueValidator(1), MaxValueValidator(24)])
     frame = models.CharField(choices=FRAME_CHOICES, max_length=5)
