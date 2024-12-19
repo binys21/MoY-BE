@@ -212,4 +212,6 @@ LASTFM_API_KEY=env('LASTFM_API_KEY')
 SPOTIFY_CLIENT_ID=env('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET=env('SPOTIFY_CLIENT_SECRET')
 
+KOPIS_API_KEY=env('KOPIS_API_KEY')
+
 redis_client = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0, decode_responses=True)

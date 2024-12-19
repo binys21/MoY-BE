@@ -572,6 +572,44 @@ def search_spotify_song(keyword):
     except requests.exceptions.RequestException as e:
         print(f"Spotify API Error: {e}")
         return None
+    
+KOPIS_API_KEY = getattr(graduation.settings.base, 'KOPIS_API_KEY')
+import xml.etree.ElementTree as ET
+def search_kopis(keyword):
+    url=f"http://www.kopis.or.kr/openApi/restful/pblprfr?service={KOPIS_API_KEY}&shprfnm={keyword}&rows=10&cpage=1&stdate=20240101&eddate=20241212"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        print("API 응답 코드:", response.status_code)
+        print("API 응답 내용:", response.content)
+
+        # XML 응답 파싱
+        root = ET.fromstring(response.content)
+        performances = []
+        for item in root.findall(".//db"):
+            print(item)
+            img = item.findtext("poster")  # 포스터 이미지
+            name = item.findtext("prfnm")  # 공연명
+            information = item.findtext("fcltynm")  # 공연 시설명
+            if img and name and information:  # 필요한 정보가 모두 있는 경우만 추가
+                performances.append({
+                    "img": img,
+                    "name": name,
+                    "information": information,
+                })
+
+        if not performances:
+            print("검색 결과가 없습니다.")
+
+        return performances
+    except requests.exceptions.RequestException as e:
+        print(f"API 요청 오류: {e}")
+        return None
+    except ET.ParseError as e:
+        print(f"XML 파싱 오류: {e}")
+        return None
+
+
 
 class ImgSearch(APIView):
     def get(self,request):
@@ -593,7 +631,7 @@ class ImgSearch(APIView):
                 type="multi"
                 result = search_tmdb_poster(keyword, type)
             elif category == "공연":
-                result = search_naver_images(keyword+"포스터")
+                result = search_kopis(keyword)
             
 
             if result is None:
