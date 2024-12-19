@@ -580,8 +580,6 @@ def search_kopis(keyword):
     try:
         response = requests.get(url)
         response.raise_for_status()
-        print("API 응답 코드:", response.status_code)
-        print("API 응답 내용:", response.content)
 
         # XML 응답 파싱
         root = ET.fromstring(response.content)
