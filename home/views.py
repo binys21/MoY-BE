@@ -31,7 +31,7 @@ class BlackHomeView(APIView):
         if self.request.method == 'POST':
             return [IsAuthenticated()]
         return [AllowAny()]
-        
+    # permission_classes=[AllowAny]
     def get(self, request):
         try:
             if request.user.is_authenticated and Black.objects.filter(user=request.user).count() > 3:
@@ -74,7 +74,8 @@ class BlackHomeView(APIView):
                 "message": "서버 내부 오류가 발생했습니다.",
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+# class BlackPostView(APIView):
+#     permission_classes=[IsAuthenticated]
     def post(self, request, format=None):
         try:
             file = request.FILES.get('img') or request.data.get('img')
@@ -128,10 +129,7 @@ class BlackHomeView(APIView):
 
 
 class WhiteHomeView(APIView):
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [IsAuthenticated()]
-        return [AllowAny()]
+    permission_classes=[AllowAny]
     def get(self, request):
         try:
             if request.user.is_authenticated and White.objects.filter(user=request.user).count() > 3:
@@ -173,7 +171,8 @@ class WhiteHomeView(APIView):
                 "message": "서버 내부 오류가 발생했습니다.",
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+class WhitePostView(APIView):
+    permission_classes=[IsAuthenticated]
     def post(self, request, format=None):
         try:
             file = request.FILES.get('img') or request.data.get('img')
