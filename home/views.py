@@ -14,7 +14,7 @@ import os
 import graduation
 from django.http import JsonResponse
 from googleapiclient.discovery import build
-
+from home.utils import rescale
 
 cloudfront_url=getattr(graduation.settings.base, 'CLOUDFRONT_URL')
 
@@ -91,6 +91,9 @@ class BlackHomeView(APIView):
                         "message": "블랙 등록 성공(이미지 링크)",
                         "data": response_data
                     }, status=status.HTTP_201_CREATED)
+            # 이미지 리사이징
+            temp_file_path = rescale(file, width=700)
+
             data = request.data.copy()
             data.pop('img')
             data['user'] = request.user.id
@@ -102,11 +105,15 @@ class BlackHomeView(APIView):
                 # S3에 파일 업로드
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
                 folder = f"{request.user.id}_{request.user.username}_img/black/{instance.id}{ext}"
-                file_url = FileUpload(s3_client).upload(file, folder)
-                url=cloudfront_url+folder
+                with open(temp_file_path, "rb") as resized_file:
+                    file_url = FileUpload(s3_client).upload(resized_file, folder)
 
+                url=cloudfront_url+folder
                 instance.img = url
                 instance.save()
+
+                # 임시 파일 삭제
+                os.remove(temp_file_path)
 
                 response_data = serializer.data 
                 response_data['nickname'] = request.user.nickname 
@@ -171,6 +178,7 @@ class WhiteHomeView(APIView):
                 "message": "서버 내부 오류가 발생했습니다.",
                 "error": str(e)
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
 class WhitePostView(APIView):
     permission_classes=[IsAuthenticated]
     def post(self, request, format=None):
@@ -188,22 +196,32 @@ class WhitePostView(APIView):
                         "message": "화이트 등록 성공(이미지 링크)",
                         "data": response_data
                     }, status=status.HTTP_201_CREATED)
+                
+            # 이미지 리사이징
+            temp_file_path = rescale(file, width=700)
+
             data = request.data.copy()
             data.pop('img')
             data['user'] = request.user.id
             data['img'] = "tmp"
             serializer = WhitePostSerializer(data=data)
+
             if serializer.is_valid():
                 instance = serializer.save()
 
                 # S3에 파일 업로드
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
                 folder = f"{request.user.id}_{request.user.username}_img/white/{instance.id}{ext}"
-                file_url = FileUpload(s3_client).upload(file, folder)
+                with open(temp_file_path, "rb") as resized_file:
+                    file_url = FileUpload(s3_client).upload(resized_file, folder)
                 url=cloudfront_url+folder
 
                 instance.img = url
                 instance.save()
+
+                # 임시 파일 삭제
+                os.remove(temp_file_path)
+
 
                 response_data = serializer.data 
                 response_data['nickname'] = request.user.nickname 
