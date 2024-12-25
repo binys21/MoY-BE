@@ -92,7 +92,7 @@ class BlackHomeView(APIView):
                         "data": response_data
                     }, status=status.HTTP_201_CREATED)
             # 이미지 리사이징
-            temp_file_path = rescale(file, width=700)
+            # temp_file_path = rescale(file, width=700)
 
             data = request.data.copy()
             data.pop('img')
@@ -105,15 +105,22 @@ class BlackHomeView(APIView):
                 # S3에 파일 업로드
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
                 folder = f"{request.user.id}_{request.user.username}_img/black/{instance.id}{ext}"
-                with open(temp_file_path, "rb") as resized_file:
-                    file_url = FileUpload(s3_client).upload(resized_file, folder)
-
+                file_url = FileUpload(s3_client).upload(file, folder)
+                if file_url is None:
+                            return Response({
+                        "message": "s3 이미지 업로드 실패",
+                        "error": serializer.errors
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 url=cloudfront_url+folder
+                # with open(temp_file_path, "rb") as resized_file:
+                #     file_url = FileUpload(s3_client).upload(resized_file, folder)
+
+                # url=cloudfront_url+folder
                 instance.img = url
                 instance.save()
 
-                # 임시 파일 삭제
-                os.remove(temp_file_path)
+                # # 임시 파일 삭제
+                # os.remove(temp_file_path)
 
                 response_data = serializer.data 
                 response_data['nickname'] = request.user.nickname 
@@ -198,7 +205,7 @@ class WhitePostView(APIView):
                     }, status=status.HTTP_201_CREATED)
                 
             # 이미지 리사이징
-            temp_file_path = rescale(file, width=700)
+            # temp_file_path = rescale(file, width=700)
 
             data = request.data.copy()
             data.pop('img')
@@ -212,15 +219,16 @@ class WhitePostView(APIView):
                 # S3에 파일 업로드
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
                 folder = f"{request.user.id}_{request.user.username}_img/white/{instance.id}{ext}"
-                with open(temp_file_path, "rb") as resized_file:
-                    file_url = FileUpload(s3_client).upload(resized_file, folder)
+                file_url = FileUpload(s3_client).upload(file, folder)
+                # with open(temp_file_path, "rb") as resized_file:
+                #     file_url = FileUpload(s3_client).upload(resized_file, folder)
                 url=cloudfront_url+folder
 
                 instance.img = url
                 instance.save()
 
-                # 임시 파일 삭제
-                os.remove(temp_file_path)
+                # # 임시 파일 삭제
+                # os.remove(temp_file_path)
 
 
                 response_data = serializer.data 
