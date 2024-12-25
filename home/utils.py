@@ -24,7 +24,7 @@ def rescale(image, width=1440, max_file_size=2 * 1024 * 1024):
         # 리사이즈 수행
         size = (dst_width, dst_height)
         img.thumbnail(size, pil.LANCZOS)
-        img = img.convert("RGB")
+    img = img.convert("RGB")
         
     # 임시 파일 저장
     temp_dir = "./home/temp"
