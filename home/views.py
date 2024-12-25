@@ -241,7 +241,7 @@ class WhitePostView(APIView):
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
                 temp_file_path = rescale(file)
 
-                folder = f"{request.user.id}_{request.user.username}_img/black/{instance.id}{ext}"
+                folder = f"{request.user.id}_{request.user.username}_img/white/{instance.id}{ext}"
                 with open(temp_file_path, "rb") as resized_file:
                     file_url = FileUpload(s3_client).upload(resized_file, folder)
                 os.remove(temp_file_path)
