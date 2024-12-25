@@ -24,4 +24,3 @@ django-redis
 requests
 google-api-python-client
 googletrans
-pillow_heif

@@ -16,12 +16,12 @@ from django.http import JsonResponse
 from googleapiclient.discovery import build
 from home.utils import rescale
 
-import os
-from PIL import Image
-from pillow_heif import register_heif_opener
+# import os
+# from PIL import Image
+# from pillow_heif import register_heif_opener
 
-# HEIC 지원 등록
-register_heif_opener()
+# # HEIC 지원 등록
+# register_heif_opener()
 
 
 cloudfront_url=getattr(graduation.settings.base, 'CLOUDFRONT_URL')
@@ -110,12 +110,14 @@ class BlackHomeView(APIView):
 
                 # S3에 파일 업로드
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
-                if file.content_type == "image/heic" or file.content_type == "image/avif":
-                    temp_file_path = self.convert_heic_to_jpeg(file)
-                    ext=".jpeg"
-                    temp_file_path = rescale(file)
-                else:
-                    temp_file_path = rescale(file)
+                # if file.content_type == "image/heic" or file.content_type == "image/avif":
+                #     temp_file_path = self.convert_heic_to_jpeg(file)
+                #     ext=".jpeg"
+                #     temp_file_path = rescale(file)
+                # else:
+                #     temp_file_path = rescale(file)
+            
+                temp_file_path = rescale(file)
                 
 
                 folder = f"{request.user.id}_{request.user.username}_img/black/{instance.id}{ext}"
@@ -152,16 +154,16 @@ class BlackHomeView(APIView):
                     "message": "서버 내부 오류가 발생했습니다.",
                     "error": str(e)
                 }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    def convert_heic_to_jpeg(self, file):
-        try:
-            # HEIC 이미지를 열고 JPEG로 변환
-            img = Image.open(file)
-            output_path = "./home/tmp/temp_image.jpeg" 
-            img.convert("RGB").save(output_path, format="JPEG")
-            return output_path
-        except Exception as e:
-            print(f"Error converting HEIC to JPEG: {e}")
-            return None
+    # def convert_heic_to_jpeg(self, file):
+    #     try:
+    #         # HEIC 이미지를 열고 JPEG로 변환
+    #         img = Image.open(file)
+    #         output_path = "./home/tmp/temp_image.jpeg" 
+    #         img.convert("RGB").save(output_path, format="JPEG")
+    #         return output_path
+    #     except Exception as e:
+    #         print(f"Error converting HEIC to JPEG: {e}")
+    #         return None
 
 
 class WhiteHomeView(APIView):
@@ -225,10 +227,7 @@ class WhitePostView(APIView):
                         "message": "화이트 등록 성공(이미지 링크)",
                         "data": response_data
                     }, status=status.HTTP_201_CREATED)
-                
-            # 이미지 리사이징
-            # temp_file_path = rescale(file, width=700)
-
+            
             data = request.data.copy()
             data.pop('img')
             data['user'] = request.user.id
@@ -240,10 +239,19 @@ class WhitePostView(APIView):
 
                 # S3에 파일 업로드
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
-                folder = f"{request.user.id}_{request.user.username}_img/white/{instance.id}{ext}"
-                file_url = FileUpload(s3_client).upload(file, folder)
-                # with open(temp_file_path, "rb") as resized_file:
-                #     file_url = FileUpload(s3_client).upload(resized_file, folder)
+                temp_file_path = rescale(file)
+
+                folder = f"{request.user.id}_{request.user.username}_img/black/{instance.id}{ext}"
+                with open(temp_file_path, "rb") as resized_file:
+                    file_url = FileUpload(s3_client).upload(resized_file, folder)
+                os.remove(temp_file_path)
+
+                if file_url is None:
+                            return Response({
+                        "message": "s3 이미지 업로드 실패",
+                        "error": serializer.errors
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
                 url=cloudfront_url+folder
 
                 instance.img = url
