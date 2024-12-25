@@ -26,13 +26,11 @@ def rescale(image, width=1440, max_file_size=2 * 1024 * 1024):
         img.thumbnail(size, pil.LANCZOS)
         img = img.convert("RGB")
         
-        # 임시 파일 저장
-        temp_dir = "./home/temp"
-        os.makedirs(temp_dir, exist_ok=True)  # 임시 폴더가 없으면 생성
-        temp_file_path = os.path.join(temp_dir, image.name if hasattr(image, 'name') else "temp_image.jpg")
+    # 임시 파일 저장
+    temp_dir = "./home/temp"
+    # os.makedirs(temp_dir, exist_ok=True)  # 임시 폴더가 없으면 생성
+    temp_file_path = os.path.join(temp_dir, image.name if hasattr(image, 'name') else "temp_image.jpg")
 
-        img.save(temp_file_path, format="JPEG")
-        return temp_file_path
+    img.save(temp_file_path, format="JPEG")
+    return temp_file_path
 
-    # 파일 크기나 해상도가 적당하면 원본 이미지 반환
-    return image
