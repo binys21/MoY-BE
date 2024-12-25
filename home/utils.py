@@ -1,7 +1,7 @@
 from PIL import Image as pil
 import os
 
-def rescale(image, width=1920, max_file_size=5 * 1024 * 1024):
+def rescale(image, width=720, max_file_size=1.5 * 1024 * 1024):
     img=pil.open(image)
     src_width, src_height = img.size
     
