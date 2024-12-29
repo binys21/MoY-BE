@@ -14,7 +14,8 @@ import os
 import graduation
 from django.http import JsonResponse
 from googleapiclient.discovery import build
-from home.utils import rescale
+from home.utils import rescale, rescale_from_path
+from datetime import datetime
 
 # import os
 # from PIL import Image
@@ -33,6 +34,30 @@ def get_black_search_history(user_id):
 def get_white_search_history(user_id):
     redis_key = f"user:{user_id}:white"
     return redis_client.lrange(redis_key, 0, -1)
+
+from django.core.files.base import ContentFile
+
+def download_image(url):
+    """
+    이미지를 URL로 다운로드하여 로컬에 임시 저장.
+    """
+    try:
+        response = requests.get(url, stream=True)
+        response.raise_for_status()
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        # 임시 파일 저장
+        temp_dir = "./home/temp"
+        temp_file_path = os.path.join(temp_dir, f"temp_image_{timestamp}.jpg")
+        
+        with open(temp_file_path, "wb") as temp_file:
+            for chunk in response.iter_content(1024):
+                temp_file.write(chunk)
+        print(temp_file_path)
+        return temp_file_path
+    except requests.exceptions.RequestException as e:
+        print(f"Error downloading image: {e}")
+        return None
+
 
 class BlackHomeView(APIView):
     def get_permissions(self):
@@ -87,18 +112,63 @@ class BlackHomeView(APIView):
     def post(self, request, format=None):
         try:
             file = request.FILES.get('img') or request.data.get('img')
+
+            # 이미지 링크인 경우
             if isinstance(file, str):
                 data = request.data.copy()
                 data['user'] = request.user.id
-                serializer = BlackPostSerializer(data=data)
-                if serializer.is_valid():
-                    instance = serializer.save()
-                    response_data = serializer.data 
-                    response_data['nickname'] = request.user.nickname 
-                    return Response({
-                        "message": "블랙 등록 성공(이미지 링크)",
-                        "data": response_data
-                    }, status=status.HTTP_201_CREATED)
+
+                # 책, 유튜브, 공연의 경우 이미지 재저장
+                if data['category'] in ["책", "유튜브", "공연"]:
+                    data.pop('img')
+                    data['img'] = "tmp"
+                    serializer = BlackPostSerializer(data=data)
+                    if serializer.is_valid():
+                        instance = serializer.save()
+                        temp_file_path = download_image(file)
+                        if temp_file_path is None:
+                                return Response({
+                                    "message": "이미지 다운로드 실패",
+                                    "error": "URL에서 이미지를 가져오지 못했습니다."
+                                }, status=status.HTTP_400_BAD_REQUEST)
+                        # 업로드된 파일로 처리
+                        # temp_file_path = rescale_from_path(temp_file_path)
+                        _, ext = os.path.splitext(temp_file_path)  # 확장자 추출
+
+                        folder = f"{request.user.id}_{request.user.username}_img/black/{instance.id}{ext}"
+                        with open(temp_file_path, "rb") as resized_file:
+                            file_url = FileUpload(s3_client).upload(resized_file, folder)
+                        os.remove(temp_file_path)
+                        if file_url is None:
+                                    return Response({
+                                "message": "s3 이미지 업로드 실패",
+                                "error": serializer.errors
+                            }, status=status.HTTP_400_BAD_REQUEST)
+                        
+                        url=cloudfront_url+folder
+                        print(url)
+                        instance.img = url
+                        instance.save()
+
+                        response_data = serializer.data 
+                        response_data['nickname'] = request.user.nickname 
+                        
+                        return Response({
+                                "message": "블랙 등록 성공(책, 유튜브, 공연)",
+                                "data": response_data
+                            }, status=status.HTTP_201_CREATED)
+                    
+                else:
+                    serializer = BlackPostSerializer(data=data)
+
+                    if serializer.is_valid():
+                        instance = serializer.save()
+                        response_data = serializer.data 
+                        response_data['nickname'] = request.user.nickname 
+                        return Response({
+                            "message": "블랙 등록 성공(이미지 링크-ott, 영화, 공연)",
+                            "data": response_data
+                        }, status=status.HTTP_201_CREATED)
 
             data = request.data.copy()
             data.pop('img')
@@ -110,12 +180,6 @@ class BlackHomeView(APIView):
 
                 # S3에 파일 업로드
                 _, ext = os.path.splitext(file.name)  # 확장자 추출
-                # if file.content_type == "image/heic" or file.content_type == "image/avif":
-                #     temp_file_path = self.convert_heic_to_jpeg(file)
-                #     ext=".jpeg"
-                #     temp_file_path = rescale(file)
-                # else:
-                #     temp_file_path = rescale(file)
             
                 temp_file_path = rescale(file)
                 
