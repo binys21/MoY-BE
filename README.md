@@ -10,7 +10,7 @@
 <br/>
 
 ### `문화ver`: 영화 / 음악 / 도서 / 유튜브 / OTT / 공연  
-### `일상ver`: 여행지 / 음식 / 임 / 사진 / 아이템 / 룩 / 스포츠 / 앱  
+### `일상ver`: 여행지 / 음식 / 밈 / 사진 / 아이템 / 룩 / 스포츠 / 앱  
 
 <img width="200" alt="Image" src="https://github.com/user-attachments/assets/8af5688b-6ede-4af0-95e4-2bb4899f3f18" />
 <img width="200" alt="Image" src="https://github.com/user-attachments/assets/90ac6801-491e-4408-8916-af632f14ffb2" />
